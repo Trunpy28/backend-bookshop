@@ -6,7 +6,7 @@ const createUser = async (req,res) => {
         const {name,email,password,confirmPassword,phone,address} = req.body;
         const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
         const ischeckEmail = regex.test(email);
-        if(!name || !email || !password || !confirmPassword || !phone || !address) {
+        if(!email || !password || !confirmPassword) {
             return res.status(200).json({
                 status: 'ERR',
                 message: 'Please fill all the fields'
@@ -34,10 +34,17 @@ const createUser = async (req,res) => {
 
 const loginUser = async (req,res) => {
     try {
-        const {email} = req.body;
+        const {email, password} = req.body;
         const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
         const ischeckEmail = regex.test(email);
-        if(!ischeckEmail){
+        
+        if(!email || !password) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'The input is require'
+            })
+        }
+        else if(!ischeckEmail){
             return res.status(200).json({
                 status: 'ERR',
                 message: 'Please enter a valid email'
@@ -45,6 +52,14 @@ const loginUser = async (req,res) => {
         }
 
         const respond = await UserServices.loginUser(req.body);
+        const {refresh_token, ...newRespond} = respond;
+
+        res.cookie('refresh_token', refresh_token,{
+            httpOnly: true,
+            secure: false,
+            samesite: 'strict'
+        })
+        
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -124,7 +139,7 @@ const getDetailUser = async (req,res) => {
 
 const refreshToken = async (req,res) => {
     try {
-        const token = req.headers.token.split(' ')[1];
+        const token = req.cookies.refresh_token;
 
         if(!token){
             return res.status(200).json({
@@ -141,9 +156,25 @@ const refreshToken = async (req,res) => {
     }
 }
 
+const logoutUser = async (req,res) => {
+    try {
+        res.clearCookie('refresh_token');
+
+        return res.status(200).json({
+            status: 'OK',
+            message: 'Đăng xuất thành công'
+        });
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
 module.exports = {
     createUser,
     loginUser,
+    logoutUser,
     updateUser,
     deleteUser,
     getAllUser,

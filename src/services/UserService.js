@@ -13,7 +13,7 @@ const createUser = (newUser) => {
             })
             if(checkUser !== null) {
                 resolve({
-                    status: 'OK',
+                    status: 'ERR',
                     message: 'The email already exists'
                 })
             }
@@ -48,7 +48,7 @@ const loginUser = (userLogin) => {
             })
             if(checkUser === null) {
                 resolve({
-                    status: 'OK',
+                    status: 'ERR',
                     message: 'The user is not defined'
                 })
             }
@@ -56,7 +56,7 @@ const loginUser = (userLogin) => {
 
             if(!comparePassword) {
                 resolve({
-                    status: 'OK',
+                    status: 'ERR',
                     message: 'The password or user is incorrect'
                 })
             }
