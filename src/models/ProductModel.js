@@ -6,7 +6,7 @@ const productSchema = new mongoose.Schema(
             required: true,
             unique: true
         },
-        img: { 
+        image: { 
             type: String, 
             required: true 
         },
@@ -31,7 +31,12 @@ const productSchema = new mongoose.Schema(
         },
         author: {
             type: String,
-            required: true
+        },
+        discount: {
+            type: Number,
+        },
+        selled: {
+            type: Number,
         }
     },
     {

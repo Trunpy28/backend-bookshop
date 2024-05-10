@@ -6,7 +6,7 @@ const { generalAccessToken, generalRefreshToken } = require("./JwtService");
 
 const createProduct = (newProduct) => {
     return new Promise(async (resolve, reject) => {
-        const {name,img,type,countInStock,price,rating,description,author} = newProduct;
+        const {name,image,type,countInStock,price,rating,description,author,discount} = newProduct;
         try {
             const checkProduct = await Product.findOne({
                 name: name
@@ -20,13 +20,14 @@ const createProduct = (newProduct) => {
 
             const createdProduct = await Product.create({
                 name,
-                img,
+                image,
                 type,
                 countInStock,
                 price,
                 rating,
                 description,
-                author
+                author,
+                discount,
             })
             if(createdProduct){
                 resolve({
