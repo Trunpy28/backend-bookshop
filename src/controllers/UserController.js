@@ -9,17 +9,17 @@ const createUser = async (req,res) => {
         if(!email || !password || !confirmPassword) {
             return res.status(200).json({
                 status: 'ERR',
-                message: 'Please fill all the fields'
+                message: 'Hãy điền đầy đủ các thông tin bắt buộc!'
             })
         }else if(!ischeckEmail){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'Please enter a valid email'
+                message: 'Hãy nhập email hợp lệ!'
             })
         }else if(password !== confirmPassword){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'Passwords do not match'
+                message: 'Mật khẩu không khớp!'
             })
         }
 
@@ -107,6 +107,25 @@ const deleteUser = async (req,res) => {
     }
 }
 
+const deleteMany = async (req,res) => {
+    try {
+        const ids = req.body.ids;
+
+        if(!ids){
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Thiếu danh sách ids'
+            })
+        }
+        const respond = await UserServices.deleteMany(ids);
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
 const getAllUser = async (req,res) => {
     try {
         const respond = await UserServices.getAllUser();
@@ -179,5 +198,6 @@ module.exports = {
     deleteUser,
     getAllUser,
     getDetailUser,
+    deleteMany,
     refreshToken
 }

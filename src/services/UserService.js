@@ -6,7 +6,7 @@ const { generalAccessToken, generalRefreshToken } = require("./JwtService");
 
 const createUser = (newUser) => {
     return new Promise(async (resolve, reject) => {
-        const {name,email,password,confirmPassword,phone,address} = newUser;
+        const {name,email,password,confirmPassword,phone,address,avatar} = newUser;
         try {
             const checkUser = await User.findOne({
                 email: email
@@ -14,7 +14,7 @@ const createUser = (newUser) => {
             if(checkUser !== null) {
                 resolve({
                     status: 'ERR',
-                    message: 'The email already exists'
+                    message: 'Email đã tồn tại!'
                 })
             }
             const hash = bCrypt.hashSync(password, 10);
@@ -24,12 +24,13 @@ const createUser = (newUser) => {
                 password: hash,  
                 confirmPassword: hash,
                 phone,
-                address
+                address,
+                avatar
             });
             if (createdUser){
                 resolve({
                     status: 'OK',
-                    message: 'User created successfully',
+                    message: 'Tạo tài khoản thành công!',
                     data: createdUser
                 })
             }
@@ -49,7 +50,7 @@ const loginUser = (userLogin) => {
             if(checkUser === null) {
                 resolve({
                     status: 'ERR',
-                    message: 'The user is not defined'
+                    message: 'Tài khoản không tồn tại!'
                 })
             }
             const comparePassword = bCrypt.compareSync(password, checkUser.password);
@@ -57,7 +58,7 @@ const loginUser = (userLogin) => {
             if(!comparePassword) {
                 resolve({
                     status: 'ERR',
-                    message: 'The password or user is incorrect'
+                    message: 'Mật khẩu hoặc email không đúng'
                 })
             }
 
@@ -72,7 +73,7 @@ const loginUser = (userLogin) => {
 
             resolve({
                 status: 'OK',
-                message: 'User login successfully',
+                message: 'Đăng nhập thành công!',
                 access_token: access_token,
                 refresh_token: refresh_token
             })
@@ -91,7 +92,7 @@ const updateUser = (id,data) => {
             if(checkUser === null) {
                 resolve({
                     status: 'OK',
-                    message: 'The user is not defined'
+                    message: 'Tài khoản không tồn tại!'
                 })
             }
             
@@ -99,7 +100,7 @@ const updateUser = (id,data) => {
             
             resolve({
                 status: 'OK',
-                message: 'User updated successfully',
+                message: 'Cập nhật thành công!',
                 data: updatedUser
             })
         }catch (e) {
@@ -116,7 +117,7 @@ const deleteUser = (id) => {
             if(checkUser === null) {
                 resolve({
                     status: 'OK',
-                    message: 'The user is not defined'
+                    message: 'Tài khoản không tồn tại!'
                 })
             }
             
@@ -124,7 +125,22 @@ const deleteUser = (id) => {
             
             resolve({
                 status: 'OK',
-                message: 'Delete user successfully'
+                message: 'Xóa tài khoản thành công!'
+            })
+        }catch (e) {
+            reject(e);
+        }
+    })
+}
+
+const deleteMany = (ids) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            await User.deleteMany({_id:{$in:ids}});
+            
+            resolve({
+                status: 'OK',
+                message: 'Xóa các tài khoản thành công!'
             })
         }catch (e) {
             reject(e);
@@ -177,5 +193,6 @@ module.exports = {
     updateUser,
     deleteUser,
     getAllUser,
-    getDetailUser
+    getDetailUser,
+    deleteMany
 }

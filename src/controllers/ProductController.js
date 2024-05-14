@@ -6,7 +6,7 @@ const createProduct = async (req,res) => {
         if(!name || !image || !type || !countInStock || !price || !rating || !author) {
             return res.status(200).json({
                 status: 'ERR',
-                message: 'Please fill all the fields'
+                message: 'Cần điền đầy đủ thông tin sản phẩm'
             })
         }
 
@@ -26,7 +26,7 @@ const updateProduct = async (req,res) => {
         if(!productId){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'The productId is required'
+                message: 'Thiếu productId'
             })
         }
 
@@ -46,7 +46,7 @@ const getDetailProduct = async (req,res) => {
         if(!productId){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'The productId is required'
+                message: 'Thiếu productId'
             })
         }
         const respond = await ProductServices.getDetailProduct(productId);
@@ -61,7 +61,7 @@ const getDetailProduct = async (req,res) => {
 const getAllProduct = async (req,res) => {
     try {
         const {limit, page, sort, filter} = req.query
-        const respond = await ProductServices.getAllProduct(Number(limit) || 10,Number(page) || 1, sort,filter);
+        const respond = await ProductServices.getAllProduct(Number(limit) || 100,Number(page) || 1, sort,filter);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -77,10 +77,29 @@ const deleteProduct = async (req,res) => {
         if(!productId){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'The productId is required'
+                message: 'Thiếu productId'
             })
         }
         const respond = await ProductServices.deleteProduct(productId);
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
+const deleteManyProduct = async (req,res) => {
+    try {
+        const ids = req.body.ids;
+
+        if(!ids){
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Thiếu danh sách ids'
+            })
+        }
+        const respond = await ProductServices.deleteManyProduct(ids);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -94,5 +113,6 @@ module.exports = {
     updateProduct,
     getDetailProduct,
     getAllProduct,
-    deleteProduct
+    deleteProduct,
+    deleteManyProduct
 }

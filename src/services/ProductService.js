@@ -1,8 +1,4 @@
 const Product = require('../models/ProductModel');
-// @ts-ignore
-const bCrypt = require("bCrypt");
-const jwt = require('jsonwebtoken');
-const { generalAccessToken, generalRefreshToken } = require("./JwtService");
 
 const createProduct = (newProduct) => {
     return new Promise(async (resolve, reject) => {
@@ -14,7 +10,7 @@ const createProduct = (newProduct) => {
             if(checkProduct !== null) {
                 resolve({
                     status: 'ERR',
-                    message: 'The product is already exist'
+                    message: 'Sản phẩm đã tồn tại!'
                 })
             }
 
@@ -32,7 +28,7 @@ const createProduct = (newProduct) => {
             if(createdProduct){
                 resolve({
                     status: 'OK',
-                    message: 'The product is created',
+                    message: 'Thêm sản phẩm thành công!',
                     data: createdProduct
                 })
             }
@@ -50,7 +46,7 @@ const updateProduct = (id,data) => {
             if(checkProduct === null) {
                 resolve({
                     status: 'OK',
-                    message: 'The product is not defined'
+                    message: 'Sản phẩm không tồn tại!'
                 })
             }
             
@@ -58,7 +54,7 @@ const updateProduct = (id,data) => {
             
             resolve({
                 status: 'OK',
-                message: 'Product updated successfully',
+                message: 'Cập nhật sản phẩm thành công!',
                 data: updatedProduct
             })
 
@@ -76,7 +72,7 @@ const deleteProduct = (id) => {
             if(checkProduct === null) {
                 resolve({
                     status: 'OK',
-                    message: 'The product is not defined'
+                    message: 'Sản phẩm không tồn tại!'
                 })
             }
             
@@ -84,7 +80,7 @@ const deleteProduct = (id) => {
             
             resolve({
                 status: 'OK',
-                message: 'Delete product successfully'
+                message: 'Xóa sản phẩm thành công!'
             })
         }catch (e) {
             reject(e);
@@ -92,7 +88,22 @@ const deleteProduct = (id) => {
     })
 }
 
-const getAllProduct = (limit = 10,page = 1, sort,filter) => {
+const deleteManyProduct = (ids) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            await Product.deleteMany({_id: ids});
+            
+            resolve({
+                status: 'OK',
+                message: 'Xóa các sản phẩm thành công!'
+            })
+        }catch (e) {
+            reject(e);
+        }
+    })
+}
+
+const getAllProduct = (limit = 100,page = 1, sort,filter) => {
     return new Promise(async (resolve, reject) => {
         try {
             const totalProduct = await Product.countDocuments();
@@ -102,7 +113,7 @@ const getAllProduct = (limit = 10,page = 1, sort,filter) => {
             
                 resolve({
                     status: 'OK',
-                    message: 'Get all product successfully',
+                    message: 'Lấy thông tin các sản phẩm thành công!',
                     data: allProductSort,
                     total: totalProduct,
                     pageCurrent: page,
@@ -114,7 +125,7 @@ const getAllProduct = (limit = 10,page = 1, sort,filter) => {
             
                 resolve({
                     status: 'OK',
-                    message: 'Get all product successfully',
+                    message: 'Lấy thông tin các sản phẩm thành công!',
                     data: allProductFilter,
                     total: totalProduct,
                     pageCurrent: page,
@@ -123,10 +134,9 @@ const getAllProduct = (limit = 10,page = 1, sort,filter) => {
             }   
             else{
                 const allProduct = await Product.find().limit(limit).skip(limit*(page-1));
-            
                 resolve({
                     status: 'OK',
-                    message: 'Get all product successfully',
+                    message: 'Lấy thông tin các sản phẩm thành công!',
                     data: allProduct,
                     total: totalProduct,
                     pageCurrent: page,
@@ -147,13 +157,13 @@ const getDetailProduct = (id) => {
             if(product === null) {
                 resolve({
                     status: 'OK',
-                    message: 'The product is not defined'
+                    message: 'Sản phẩm không tồn tại!'
                 })
             }
             
             resolve({
                 status: 'OK',
-                message: 'Get product info successfully',
+                message: 'Lấy thông tin sản phẩm thành công!',
                 data: product
             })
         }catch (e) {
@@ -167,5 +177,6 @@ module.exports = {
     updateProduct,
     deleteProduct,
     getAllProduct,
-    getDetailProduct
+    getDetailProduct,
+    deleteManyProduct
 }
