@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const orderSchema = new mongoose.Schema(
     {
-        OrderItems: [
+        orderItems: [
             {
                 name: {
                     type: String,
@@ -35,14 +35,14 @@ const orderSchema = new mongoose.Schema(
                 type: String,
                 required: true
             },
-            city: {
-                type: String,
-                required: true
-            },
             phone: {
                 type: Number,
                 required: true
             },
+        },
+        deliveryMethod: {
+            type: String,
+            required: true
         },
         paymentMethod: {
             type: String,
@@ -53,10 +53,6 @@ const orderSchema = new mongoose.Schema(
             required: true
         },
         shippingPrice: {
-            type: Number,
-            required: true
-        },
-        discountPrice: {
             type: Number,
             required: true
         },
@@ -75,6 +71,7 @@ const orderSchema = new mongoose.Schema(
         },
         paidAt: {
             type: Date,
+            required: false
         },
         isDelivery: {
             type: Boolean,
@@ -82,7 +79,12 @@ const orderSchema = new mongoose.Schema(
         },
         deliveryAt: {
             type: Date,
+            required: false
         },
+        isCancelled: {
+            type: Boolean,
+            default: false
+        }
     },
     {
         timestamps: true
