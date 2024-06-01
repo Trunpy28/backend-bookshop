@@ -2,8 +2,8 @@ const OrderServices = require('../services/OrderService');
 
 const createOrder = async (req,res) => {
     try {
-        const {deliveryMethod,paymentMethod,itemsPrice,shippingPrice,totalPrice, fullName, address, phone} = req.body;
-        if(!deliveryMethod || !paymentMethod || !itemsPrice || !shippingPrice || !totalPrice || !fullName || !address || !phone) {
+        const {deliveryMethod,paymentMethod,totalPrice, fullName, address, phone} = req.body;
+        if(!deliveryMethod || !paymentMethod || totalPrice < 0 || !fullName || !address || !phone) {
             return res.status(200).json({
                 status: 'ERR',
                 message: 'Cần điền đầy đủ thông tin cho đơn hàng'
@@ -61,14 +61,14 @@ const getDetailsOrder = async (req,res) => {
 const cancelOrder = async (req,res) => {
     try {
         const orderId = req.params.id;
-
+        const data = req.body;
         if(!orderId){
             return res.status(200).json({
                 status: 'ERR',
                 message: 'Thiếu productId'
             })
         }
-        const respond = await OrderServices.cancelOrder(orderId);
+        const respond = await OrderServices.cancelOrder(orderId,data);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
