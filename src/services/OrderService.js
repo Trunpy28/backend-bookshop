@@ -1,5 +1,6 @@
 const Order = require("../models/OrderProduct");
 const Product = require("../models/ProductModel");
+const EmailService = require("./EmailService");
 
 const createOrder = (newOrder) => {
   return new Promise(async (resolve, reject) => {
@@ -14,6 +15,7 @@ const createOrder = (newOrder) => {
       address,
       phone,
       user,
+      email
     } = newOrder;
     try {
       const invalidProducts = [];
@@ -65,6 +67,7 @@ const createOrder = (newOrder) => {
           user,
         });
         if (createdOrder) {
+          await EmailService.sendEmailCreateOrder(email, createdOrder);
           resolve({
             status: "OK",
             message: "Tạo đơn hàng thành công!",
@@ -73,6 +76,7 @@ const createOrder = (newOrder) => {
         }
       }
     } catch (e) {
+      console.log(e.message);
       reject(e.message);
     }
   });
