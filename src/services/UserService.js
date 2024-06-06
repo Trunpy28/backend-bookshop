@@ -91,7 +91,7 @@ const updateUser = (id,data) => {
 
             if(checkUser === null) {
                 resolve({
-                    status: 'OK',
+                    status: 'ERR',
                     message: 'Tài khoản không tồn tại!'
                 })
             }
@@ -116,7 +116,7 @@ const deleteUser = (id) => {
 
             if(checkUser === null) {
                 resolve({
-                    status: 'OK',
+                    status: 'ERR',
                     message: 'Tài khoản không tồn tại!'
                 })
             }
@@ -155,7 +155,7 @@ const getAllUser = () => {
             
             resolve({
                 status: 'OK',
-                message: 'Get all user successfully',
+                message: 'Lấy thông tin các tài khoản thành công!',
                 data: allUser
             })
         }catch (e) {
@@ -170,14 +170,14 @@ const getDetailUser = (id) => {
             const user = await User.findById(id);
             if(user === null) {
                 resolve({
-                    status: 'OK',
-                    message: 'The user is not defined'
+                    status: 'ERR',
+                    message: 'Tài khoản không tồn tại!'
                 })
             }
             
             resolve({
                 status: 'OK',
-                message: 'Get user info successfully',
+                message: 'Lấy thông tin tài khoản thành công!',
                 data: user
             })
         }catch (e) {

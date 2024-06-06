@@ -1,16 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const userController = require('../controllers/UserController');
+const UserController = require('../controllers/UserController');
 const { authMiddleware, authUserMiddleware } = require('../middleware/authMiddleware');
 
-router.post('/sign-up', userController.createUser)
-router.post('/sign-in', userController.loginUser)
-router.post('/log-out', userController.logoutUser)
-router.put('/update-user/:id',authUserMiddleware, userController.updateUser)
-router.delete('/delete-user/:id',authMiddleware, userController.deleteUser)
-router.get('/get-all',authMiddleware,userController.getAllUser)
-router.get('/get-details/:id',authUserMiddleware,userController.getDetailUser)
-router.post('/refresh-token',userController.refreshToken)
-router.post('/delete-many',authMiddleware,userController.deleteMany)
+router.post('/sign-up', UserController.createUser)
+router.post('/sign-in', UserController.loginUser)
+router.post('/log-out', UserController.logoutUser)
+router.put('/update-user/:id',authUserMiddleware, UserController.updateUser)
+router.delete('/delete-user/:id',authMiddleware, UserController.deleteUser)
+router.get('/get-all',authMiddleware,UserController.getAllUser)
+router.get('/get-details/:id',authUserMiddleware,UserController.getDetailUser)
+router.post('/refresh-token',UserController.refreshToken)
+router.post('/delete-many',authMiddleware,UserController.deleteMany)
 
 module.exports = router;

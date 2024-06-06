@@ -34,7 +34,7 @@ const sendEmailCreateOrder = async (email, order) => {
     second: "2-digit",
     hour12: false
   };
-  const formattedDate = date.toLocaleString('vi-VN',options)
+  const formattedDate = date.toLocaleString('vi-VN',options);
 
   let orderHtml = `
   <!DOCTYPE html>

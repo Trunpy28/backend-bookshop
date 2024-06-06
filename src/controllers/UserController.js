@@ -95,7 +95,7 @@ const deleteUser = async (req,res) => {
         if(!userId){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'The userId is required'
+                message: 'Thiếu userId'
             })
         }
         const respond = await UserServices.deleteUser(userId);

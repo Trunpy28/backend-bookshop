@@ -77,9 +77,83 @@ const cancelOrder = async (req,res) => {
     }
 }
 
+const getAllOrder = async (req,res) => {
+    try {
+        
+        const respond = await OrderServices.getAllOrder();
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
+const updateOrder = async (req,res) => {
+    try {
+        const orderId = req.params.id;
+        const data = req.body;
+        if(!orderId){
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Thiếu orderId'
+            })
+        }
+
+        const respond = await OrderServices.updateOrder(orderId,data);
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
+const deleteOrder = async (req,res) => {
+    try {
+        const orderId = req.params.id;
+
+        if(!orderId){
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Thiếu orderId'
+            })
+        }
+        const respond = await OrderServices.deleteOrder(orderId);
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
+const deleteMany = async (req,res) => {
+    try {
+        const ids = req.body.ids;
+
+        if(!ids){
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Thiếu danh sách ids'
+            })
+        }
+        const respond = await OrderServices.deleteMany(ids);
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e
+        })
+    }
+}
+
 module.exports = {
     createOrder,
     getAllOrdersDetails,
     getDetailsOrder,
     cancelOrder,
+    getAllOrder,
+    updateOrder,
+    deleteOrder,
+    deleteMany
 }

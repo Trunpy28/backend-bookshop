@@ -67,12 +67,12 @@ const createOrder = (newOrder) => {
           user,
         });
         if (createdOrder) {
-          await EmailService.sendEmailCreateOrder(email, createdOrder);
           resolve({
             status: "OK",
             message: "Tạo đơn hàng thành công!",
             data: createdOrder,
           });
+          await EmailService.sendEmailCreateOrder(email, createdOrder);
         }
       }
     } catch (e) {
@@ -94,6 +94,7 @@ const getAllOrdersDetails = (id) => {
           status: "ERR",
           message: "Lấy thông tin các đơn hàng thất bại!",
         });
+        return;
       }
 
       resolve({
@@ -117,6 +118,7 @@ const getDetailsOrder = (id) => {
           status: "ERR",
           message: "Đơn hàng không tồn tại!",
         });
+        return;
       }
 
       resolve({
@@ -146,6 +148,7 @@ const cancelOrder = (id, data) => {
           status: "ERR",
           message: "Không thể hủy được đơn hàng!",
         });
+        return;
       }
 
       order = await Order.findByIdAndUpdate(
@@ -188,9 +191,95 @@ const cancelOrder = (id, data) => {
   });
 };
 
+const getAllOrder = () => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          const allOrder = await Order.find().sort({ createdAt: 'desc'});
+          
+          resolve({
+              status: 'OK',
+              message: 'Lấy thông tin các đơn hàng thành công!',
+              data: allOrder
+          })
+      }catch (e) {
+          reject(e);
+      }
+  })
+}
+
+const updateOrder = (id,data) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          const checkOrder = await Order.findById(id);
+
+          if(checkOrder === null) {
+              resolve({
+                  status: 'OK',
+                  message: 'Đơn hàng không tồn tại!'
+              })
+              return;
+          }
+          
+          const updatedOrder = await Order.findByIdAndUpdate(id,data,{new: true});
+          
+          resolve({
+              status: 'OK',
+              message: 'Cập nhật thành công!',
+              data: updateOrder
+          })
+      }catch (e) {
+          reject(e);
+      }
+  })
+}
+
+const deleteOrder = (id) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          const checkOrder = await Order.findById(id);
+
+          if(checkOrder === null) {
+              resolve({
+                  status: 'OK',
+                  message: 'Đơn hàng không tồn tại!'
+              })
+              return;
+          }
+          
+          await Order.findByIdAndDelete(id);
+          
+          resolve({
+              status: 'OK',
+              message: 'Xóa đơn hàng thành công!'
+          })
+      }catch (e) {
+          reject(e);
+      }
+  })
+}
+
+const deleteMany = (ids) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          await Order.deleteMany({_id:{$in:ids}});
+          
+          resolve({
+              status: 'OK',
+              message: 'Xóa các đơn hàng thành công!'
+          })
+      }catch (e) {
+          reject(e);
+      }
+  })
+}
+
 module.exports = {
   createOrder,
   getAllOrdersDetails,
   getDetailsOrder,
   cancelOrder,
+  getAllOrder,
+  updateOrder,
+  deleteOrder,
+  deleteMany,
 };
