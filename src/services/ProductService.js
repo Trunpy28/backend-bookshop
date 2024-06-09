@@ -103,7 +103,7 @@ const deleteManyProduct = (ids) => {
     })
 }
 
-const getAllProduct = (limit = 1000000,page = 1, sort,filter) => {
+const getAllProduct = (limit = Number.MAX_SAFE_INTEGER,page = 1, sort,filter) => {
     return new Promise(async (resolve, reject) => {
         try {
             let totalProduct = await Product.countDocuments();

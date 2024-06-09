@@ -56,11 +56,10 @@ const sendEmailCreateOrder = async (email, order) => {
           <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
               <thead>
                   <tr>
-                      <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Hình ảnh</th>
                       <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Tên sản phẩm</th>
                       <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Giá</th>
                       <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Số lượng</th>
-                      <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Tổng cộng</th>
+                      <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Tạm tính</th>
                   </tr>
               </thead>
               <tbody>`;
@@ -68,11 +67,6 @@ const sendEmailCreateOrder = async (email, order) => {
   orderItems.forEach((item) => {
     orderHtml += `
                   <tr>
-                      <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">
-                          <img src="${
-                            item.image
-                          }" alt="${"Ảnh"}" style="width: 50px; height: auto;">
-                      </td>
                       <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">${
                         item.name
                       }</td>
@@ -106,7 +100,7 @@ const sendEmailCreateOrder = async (email, order) => {
             "vi-VN",
             { style: "currency", currency: "VND" }
           )}</p>
-          <p style="color: #555; font-weight: bold;">Tổng cộng: ${totalPrice.toLocaleString(
+          <p style="color: #CD3238; font-weight: bold;">Tổng cộng: ${totalPrice.toLocaleString(
             "vi-VN",
             { style: "currency", currency: "VND" }
           )}</p>
@@ -117,7 +111,7 @@ const sendEmailCreateOrder = async (email, order) => {
 
   const info = await transporter.sendMail({
     from: process.env.MAIL_ACCOUNT, // sender address
-    to: process.env.MAIL_ACCOUNT, // list of receivers
+    to: email, // list of receivers
     subject: "Bạn đã đặt đơn hàng thành công tại BKshop", // Subject line
     text: "Đặt hàng thành công!", // plain text body
     html: orderHtml, // html body

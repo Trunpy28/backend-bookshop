@@ -61,7 +61,7 @@ const getDetailProduct = async (req,res) => {
 const getAllProduct = async (req,res) => {
     try {
         const {limit, page, sort, filter} = req.query
-        const respond = await ProductServices.getAllProduct(Number(limit) || null,Number(page) || 1, sort,filter);
+        const respond = await ProductServices.getAllProduct(Number(limit) || Number.MAX_SAFE_INTEGER,Number(page) || 1, sort,filter);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
