@@ -1,6 +1,19 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
+const fs = require("fs");
+const path = require("path");
+const handlebars = require("handlebars");
 dotenv.config();
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // Use `true` for port 465, `false` for all other ports
+  auth: {
+    user: process.env.MAIL_ACCOUNT,
+    pass: process.env.MAIL_PASSWORD,
+  },
+});
 
 const sendEmailCreateOrder = async (email, order) => {
   const {
@@ -12,16 +25,6 @@ const sendEmailCreateOrder = async (email, order) => {
     createdAt,
     _id: id
   } = order;
-
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 465,
-    secure: true, // Use `true` for port 465, `false` for all other ports
-    auth: {
-      user: process.env.MAIL_ACCOUNT,
-      pass: process.env.MAIL_PASSWORD,
-    },
-  });
 
   const date = new Date(createdAt);
 
@@ -109,7 +112,7 @@ const sendEmailCreateOrder = async (email, order) => {
   </body>
   </html>`;
 
-  const info = await transporter.sendMail({
+  await transporter.sendMail({
     from: process.env.MAIL_ACCOUNT, // sender address
     to: email, // list of receivers
     subject: "Bạn đã đặt đơn hàng thành công tại BKshop", // Subject line
@@ -118,6 +121,31 @@ const sendEmailCreateOrder = async (email, order) => {
   });
 };
 
+const sendEmailResetPassword = async (email, token) => {
+  const resetPasswordLink = `${process.env.CLIENT_URL}/account/recovery/reset-password?email=${encodeURIComponent(email)}&verify_token=${token}`;
+  const sourceHtml = fs.readFileSync(path.resolve(__dirname, "../templateEmails/resetPassword.html"), { encoding: "utf8" });
+
+  const template = handlebars.compile(sourceHtml);
+
+  const context = {
+    otpCode: token,
+    resetLink: resetPasswordLink
+  }
+
+  const resetPasswordHtml = template(context);
+
+  const mailOptions = {
+    from: process.env.MAIL_ACCOUNT, // sender address
+    to: email, // list of receivers
+    subject: "Đặt lại mật khẩu", // Subject line
+    text: "Đặt hàng thành công!", // plain text body
+    html: resetPasswordHtml, // html body
+  }
+
+  await transporter.sendMail(mailOptions);
+}
+
 module.exports = {
   sendEmailCreateOrder,
+  sendEmailResetPassword
 };

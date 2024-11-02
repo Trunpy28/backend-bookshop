@@ -7,19 +7,26 @@ const createUser = async (req,res) => {
         const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
         const ischeckEmail = regex.test(email);
         if(!email || !password || !confirmPassword) {
-            return res.status(200).json({
+            return res.status(400).json({
                 status: 'ERR',
                 message: 'Hãy điền đầy đủ các thông tin bắt buộc!'
             })
         }else if(!ischeckEmail){
-            return res.status(200).json({
+            return res.status(400).json({
                 status: 'ERR',
                 message: 'Hãy nhập email hợp lệ!'
             })
         }else if(password !== confirmPassword){
-            return res.status(200).json({
+            return res.status(400).json({
                 status: 'ERR',
                 message: 'Mật khẩu không khớp!'
+            })
+        }
+
+        if(password.length < 8){
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Mật khẩu phải có ít nhất 8 ký tự!'
             })
         }
 
@@ -60,6 +67,7 @@ const loginUser = async (req,res) => {
             samesite: 'strict'
         })
         
+        delete respond?.refresh_token;
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -191,6 +199,80 @@ const logoutUser = async (req,res) => {
     }
 }
 
+const forgotPassword = async (req,res) => {
+    try {
+        const email = req.params.email;
+        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        const ischeckEmail = regex.test(email);
+        if(!email || !ischeckEmail) return res.status(404).json({
+            message: "Email không hợp lệ!"
+        });
+
+        await UserServices.forgotPassword(email);
+        return res.status(200).json({
+            message: "Mã xác nhận đã gửi về email của bạn. Vui lòng kiểm tra hộp thư đến và xác nhận mã!"
+        });
+    }
+    catch(error) {
+        return res.status(404).json({
+            message: error.message
+        })
+    }
+}
+
+const verifyResetPasswordToken = async (req,res) => {
+    try {
+        const { email } = req.params;
+        const token = req.body.OTP;
+        const tokenRegex = /^\d{6}$/;
+        if(!email || !token || !tokenRegex.test(token)) {
+            return res.status(400).json({
+                message: "Token không hợp lệ!"
+            })
+        }
+
+        const verify = await UserServices.verifyResetPasswordToken(email, token);
+        if(!verify) {
+            return res.status(400).json({
+                message: "OTP không hợp lệ!"
+            })
+        }
+        return res.status(200).json({
+            message: "OTP hợp lệ!"
+        })
+    }catch(error) {
+        return res.status(400).json({
+            message: error.message
+        })
+    }
+}
+
+const resetPassword = async (req,res) => {
+    try {
+        const { email, verify_code: token, password } = req.body;
+        if(!password || !email || !token) {
+            return res.status(400).json({
+                message: "Thiếu thông tin cần thiết!"
+            })
+        }
+
+        if(password.length < 8) {
+            return res.status(400).json({
+                message: "Mật khẩu phải có ít nhất 8 ký tự!"
+            })
+        }
+
+        await UserServices.resetPassword(email, token, password);
+        return res.status(200).json({
+            message: "Mật khẩu đã được thay đổi thành công!"
+        })
+    }
+    catch(error) {
+        return res.status(400).json({
+            message: error.message
+        })
+    }
+}
 module.exports = {
     createUser,
     loginUser,
@@ -200,5 +282,8 @@ module.exports = {
     getAllUser,
     getDetailUser,
     deleteMany,
-    refreshToken
+    refreshToken,
+    forgotPassword,
+    verifyResetPasswordToken,
+    resetPassword
 }

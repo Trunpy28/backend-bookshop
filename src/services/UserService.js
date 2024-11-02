@@ -1,7 +1,9 @@
 const User = require("../models/UserModel");
 // @ts-ignore
 const bCrypt = require("bcrypt");
+const otpGenerator = require("otp-generator");
 const { generalAccessToken, generalRefreshToken } = require("./JwtService");
+const { sendEmailResetPassword } = require("./EmailService");
 
 const createUser = async (newUser) => {
   const { name, email, password, phone, address, avatar } = newUser;
@@ -28,7 +30,6 @@ const createUser = async (newUser) => {
     return {
       status: "OK",
       message: "Tạo tài khoản thành công!",
-      data: createdUser,
     };
   }
 };
@@ -37,7 +38,7 @@ const loginUser = async (userLogin) => {
   const { email, password } = userLogin;
   const checkUser = await User.findOne({
     email: email,
-  });
+  }).select("+password");
   if (checkUser === null) {
     return {
       status: "ERR",
@@ -142,6 +143,52 @@ const getDetailUser = async (id) => {
   };
 };
 
+const forgotPassword = async (email) => {
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return;
+
+    const resetPasswordOTP = otpGenerator.generate(6, {
+      lowerCaseAlphabets: false,
+      upperCaseAlphabets: false,
+      specialChars: false,
+    });
+
+    user.resetPasswordToken = resetPasswordOTP;
+    user.resetPasswordExpiresIn = Date.now() + 5 * 60 * 1000;
+    await sendEmailResetPassword(email, resetPasswordOTP);
+
+    await user.save();
+  } catch (error) {
+    console.error("Error while saving user:", error);
+    throw new Error("Cannot create token!");
+  }
+};
+
+const verifyResetPasswordToken = async (email, token) => {
+  try {
+    const user = await User.findOne({ email, resetPasswordToken: token });
+    if (!user) return false;
+    if (Date.now() > new Date(user.resetPasswordExpiresIn).getTime())
+      return false;
+    return true;
+  } catch (error) {
+    throw new Error("Token không hợp lệ!");
+  }
+};
+
+const resetPassword = async (email, token, password) => {
+  const user = await User.findOne({ email, resetPasswordToken: token });
+  if (!user) throw new Error("Khôi phục mật khẩu thất bại!");
+  if (Date.now() > new Date(user.resetPasswordExpiresIn).getTime())
+    throw new Error("OTP đã hết hạn!");
+
+  user.password = bCrypt.hashSync(password, 10);
+  user.resetPasswordToken = null;
+  user.resetPasswordExpiresIn = null;
+  await user.save();
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -150,4 +197,7 @@ module.exports = {
   getAllUser,
   getDetailUser,
   deleteMany,
+  forgotPassword,
+  verifyResetPasswordToken,
+  resetPassword,
 };

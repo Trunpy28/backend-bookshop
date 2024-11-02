@@ -3,7 +3,6 @@ const userSchema = new mongoose.Schema(
     {
         name: {
             type: String,
-            // required: true
         },
         email: {
             type: String,
@@ -12,7 +11,8 @@ const userSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: true
+            required: true,
+            select: false
         },
         isAdmin: {
             type: Boolean,
@@ -21,15 +21,22 @@ const userSchema = new mongoose.Schema(
         },
         phone: {
             type: String,
-            // required: true
+            match: /^\d+$/
         },
         address: {
             type: String,
-            // required: true
         },
         avatar: {
             type: String,
         },
+        resetPasswordToken: {
+            type: String,
+            select: false
+        },
+        resetPasswordExpiresIn: {
+            type: Date,
+            select: false
+        }
     },
     {
         timestamps: true
