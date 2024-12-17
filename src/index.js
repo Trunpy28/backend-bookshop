@@ -28,7 +28,7 @@ app.use(
 
 app.use(cookieParser());
 
-app.use(passport.initialize());
+app.use(passport.initialize());     //Cấu hình passport cho toàn server
 
 app.use(express.json({limit: '50mb'}));
 
