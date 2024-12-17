@@ -214,7 +214,7 @@ const updateOrder = (id,data) => {
 
           if(checkOrder === null) {
               resolve({
-                  status: 'OK',
+                  status: 'ERR',
                   message: 'Đơn hàng không tồn tại!'
               })
               return;

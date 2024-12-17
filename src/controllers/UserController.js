@@ -63,7 +63,7 @@ const loginUser = async (req,res) => {
 
         res.cookie('refresh_token', refresh_token,{
             httpOnly: true,
-            secure: false,
+            secure: process.env.NODE_ENV === 'production',
             samesite: 'strict'
         })
         
@@ -174,7 +174,6 @@ const refreshToken = async (req,res) => {
             })
         }
         const respond = await JwtService.refreshTokenJwtService(refreshToken);
-        console.log(respond);
         
         return res.status(200).json(respond);
     } catch (e) {
@@ -273,6 +272,7 @@ const resetPassword = async (req,res) => {
         })
     }
 }
+
 module.exports = {
     createUser,
     loginUser,

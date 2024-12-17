@@ -189,6 +189,21 @@ const resetPassword = async (email, token, password) => {
   await user.save();
 };
 
+const findUserByEmail = async (email) => {
+  return await User.findOne({ email });
+};
+
+// Tạo người dùng mới
+const createUserOAuth = async ({ email, name, avatar }) => {
+  const user = new User({
+    email,
+    name,
+    avatar,
+  });
+
+  return await user.save();
+};
+
 module.exports = {
   createUser,
   loginUser,
@@ -200,4 +215,6 @@ module.exports = {
   forgotPassword,
   verifyResetPasswordToken,
   resetPassword,
+  findUserByEmail,
+  createUserOAuth,
 };
