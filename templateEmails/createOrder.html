@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0;">
+    <div style="width: 80%; margin: 0 auto; background-color: #fff; padding: 20px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);">
+        <h1 style="color: #333;">BKshop</h1>
+        <p style="color: #555;">Cảm ơn quý khách đã đặt hàng tại BKshop. Dưới đây là chi tiết đơn hàng của quý khách:</p>
+        <h2 style="color: #333;">Thông tin khách hàng</h2>
+        <p style="color: #555;"><strong>Họ tên:</strong> {{fullName}}</p>
+        <p style="color: #555;"><strong>Địa chỉ:</strong> {{address}}</p>
+        <p style="color: #555;"><strong>Số điện thoại:</strong> {{phone}}</p>
+        <p style="color: #555;"><strong>Thời gian đặt hàng:</strong> {{formattedDate}}</p>
+        <h2 style="color: #333;">Chi tiết đơn hàng</h2>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+            <thead>
+                <tr>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Tên sản phẩm</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Giá</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Số lượng</th>
+                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left; background-color: #f2f2f2;">Tạm tính</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each orderItems}}
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{{this.name}}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{{this.price}}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: left;">{{this.amount}}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: left;color: #CD3238;">{{this.subtotal}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        <p style="color: #555;">Tạm tính: {{itemsPrice}}</p>
+        <p style="color: #555;">Phí vận chuyển: {{shippingPrice}}</p>
+        <p style="color: #CD3238; font-weight: bold;">Tổng cộng: {{totalPrice}}</p>
+        <p style="color: #555;">Cảm ơn quý khách đã mua hàng! Nếu có bất kỳ câu hỏi nào, xin vui lòng liên hệ với đội ngũ hỗ trợ của chúng tôi.</p>
+    </div>
+</body>
+</html> 
