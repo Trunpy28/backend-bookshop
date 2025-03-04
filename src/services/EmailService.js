@@ -138,7 +138,7 @@ const sendEmailResetPassword = async (email, token) => {
     from: process.env.MAIL_ACCOUNT, // sender address
     to: email, // list of receivers
     subject: "Đặt lại mật khẩu", // Subject line
-    text: "Đặt hàng thành công!", // plain text body
+    text: "Đặt lại mật khẩu thành công!", // plain text body
     html: resetPasswordHtml, // html body
   }
 

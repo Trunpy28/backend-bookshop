@@ -225,7 +225,7 @@ const updateOrder = (id,data) => {
           resolve({
               status: 'OK',
               message: 'Cập nhật thành công!',
-              data: updateOrder
+              data: updatedOrder
           })
       }catch (e) {
           reject(e);
