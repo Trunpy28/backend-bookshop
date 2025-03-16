@@ -21,7 +21,7 @@ export const uploadFile = async (file) => {
         const result = await cloudinary.uploader.upload(dataUrl, {
             public_id: fileName,
             resource_type: 'auto',
-            folder: 'Edupress',
+            folder: 'Bkshop',
             overwrite: true
         });
         
@@ -36,7 +36,7 @@ export const uploadFiles = async (listFile) => {
     const errorList = [];
 
     if (!listFile || listFile.length === 0) {
-        throw new Error('There is no file to upload');
+        throw new Error('Không có ảnh để tải lên');
     }
 
     for (const file of listFile) {
@@ -47,7 +47,7 @@ export const uploadFiles = async (listFile) => {
             const result = await cloudinary.uploader.upload(dataUrl, {
                 public_id: fileName,
                 resource_type: 'auto',
-                folder: 'Edupress',
+                folder: 'BKshop',
                 overwrite: true
             });
             listResult.push(result);

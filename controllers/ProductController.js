@@ -1,130 +1,144 @@
-import ProductServices from '../services/ProductService.js';
+import ProductService from '../services/ProductService.js';
+import CloudinaryService from '../services/CloudinaryService.js';
 
-const createProduct = async (req,res) => {
+const createProduct = async (req, res) => {
     try {
-        const {name,image,type,countInStock,price,rating,description,author} = req.body;
-        if(!name || !image || !type || !countInStock || !price || !rating || !author) {
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Cần điền đầy đủ thông tin sản phẩm'
-            })
+        const { files } = req;
+        const imageLinks = [];
+        
+        // Upload từng ảnh lên Cloudinary và lưu link
+        const { listResult, errorList } = await CloudinaryService.uploadFiles(files);
+        
+        if (errorList.length > 0) {
+            return res.status(400).json({ message: 'Một số ảnh không thể tải lên', errors: errorList });
         }
 
-        const respond = await ProductServices.createProduct(req.body);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
-    }
-}
+        listResult.forEach(result => imageLinks.push(result.secure_url));
 
-const updateProduct = async (req,res) => {
+        const productData = {
+            ...req.body,
+            images: imageLinks
+        };
+
+        const product = await ProductService.createProduct(productData);
+        res.status(201).json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi tạo sản phẩm', error: error.message });
+    }
+};
+
+const updateProduct = async (req, res) => {
     try {
-        const productId = req.params.id;
-        const data = req.body;
-        if(!productId){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu productId'
-            })
-        }
-
-        const respond = await ProductServices.updateProduct(productId,data);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+      const { id } = req.params;
+      const { files } = req;
+      let updatedFields = { ...req.body };
+      
+      // Nếu có file mới được upload
+      if (files && files.length > 0) {
+        const { listResult } = await CloudinaryService.uploadFiles(files);
+        const imageLinks = listResult.map(result => result.secure_url);
+        
+        // Cập nhật trường images
+        updatedFields.images = imageLinks;
+      } else {
+        // Nếu không có file mới, loại bỏ trường images để không cập nhật
+        delete updatedFields.images;
+      }
+      
+      // Cập nhật sản phẩm
+      const result = await ProductService.updateProduct(id, updatedFields);
+      res.status(200).json(result);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
     }
-}
+  };
 
-const getDetailProduct = async (req,res) => {
+const getDetailProduct = async (req, res) => {
     try {
-        const productId = req.params.id;
-
-        if(!productId){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu productId'
-            })
-        }
-        const respond = await ProductServices.getDetailProduct(productId);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+        const { id } = req.params;
+        const product = await ProductService.getDetailProduct(id);
+        res.status(200).json(product);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi lấy thông tin sản phẩm', error: error.message });
     }
-}
+};
 
-const getAllProduct = async (req,res) => {
+const deleteProduct = async (req, res) => {
     try {
-        const {limit, page, sort, filter} = req.query
-        const respond = await ProductServices.getAllProduct(Number(limit) || Number.MAX_SAFE_INTEGER,Number(page) || 1, sort,filter);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+        const { id } = req.params;
+        const result = await ProductService.deleteProduct(id);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi xóa sản phẩm', error: error.message });
     }
-}
+};
 
-const deleteProduct = async (req,res) => {
+const getAllProduct = async (req, res) => {
     try {
-        const productId = req.params.id;
-
-        if(!productId){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu productId'
-            })
-        }
-        const respond = await ProductServices.deleteProduct(productId);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+        const { limit, page, sort, filter } = req.query;
+        const products = await ProductService.getAllProduct(limit, page, sort, filter);
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi lấy danh sách sản phẩm', error: error.message });
     }
-}
+};
 
-const deleteManyProduct = async (req,res) => {
+const deleteManyProduct = async (req, res) => {
     try {
-        const ids = req.body.ids;
-
-        if(!ids){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu danh sách ids'
-            })
-        }
-        const respond = await ProductServices.deleteManyProduct(ids);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+        const { ids } = req.body;
+        const result = await ProductService.deleteManyProduct(ids);
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi xóa nhiều sản phẩm', error: error.message });
     }
-}
+};
 
-const getAllType = async (req,res) => {
+const getAllType = async (req, res) => {
     try {
-        const respond = await ProductServices.getAllType();
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+        const types = await ProductService.getAllType();
+        res.status(200).json(types);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi lấy danh sách thể loại', error: error.message });
     }
-}
+};
+
+const getProductsPaginated = async (req, res) => {
+    try {
+      const { page = 1, limit = 10 } = req.query;
+      const { products, total } = await ProductService.getProductsPaginated(Number(page), Number(limit));
+      res.status(200).json({ products, total });
+    } catch (error) {
+      res.status(500).json({ message: 'Lỗi khi lấy sản phẩm', error });
+    }
+};
+
+const getAllProductsName = async (req, res) => {
+  try {
+    const products = await ProductService.getAllProductsName();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getProductsForSelect = async (req, res) => {
+  try {
+    const products = await ProductService.getProductsForSelect();
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 
 export default {
     createProduct,
     updateProduct,
     getDetailProduct,
-    getAllProduct,
     deleteProduct,
+    getAllProduct,
     deleteManyProduct,
-    getAllType
-}
+    getAllType,
+    getProductsPaginated,
+    getAllProductsName,
+    getProductsForSelect
+};

@@ -2,54 +2,87 @@ import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const authMiddleware = (req,res,next) => {
-    
-    const token = req.headers.token.split(' ')[1]
-    jwt.verify(token,process.env.ACCESS_TOKEN,function(err,user) {
-        if(err){
-            console.log(err);
-            
-            return res.status(404).json({
-                message: 'The authentication token',
-                status: 'ERROR'
-            })
-        }
+const authMiddleware = async (req, res, next) => {
+    if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer")) {
+        return res.status(401).json({
+            success: false,
+            message: "Không có quyền truy cập"
+        })
+    }
 
-        if(user?.isAdmin){
-            next();
-        }else{
-            return res.status(404).json({
-                message: 'The authentication token', 
-                status: 'ERROR'
-            })
-        }
-    });
+    const accessToken = req.headers.authorization.split(' ')[1];
+    if (!accessToken) {
+        return res.status(401).json({
+            success: false,
+            message: "Không có quyền truy cập"
+        })
+    }
+
+    try {
+        const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        console.log(error);
+        return res.status(401).json({
+            success: false,
+            message: "Không có quyền truy cập"
+        })
+    }
 }
 
-const authUserMiddleware = (req,res,next) => {
-    const token = req.headers.token.split(' ')[1];
-    const userId = req.params.id
-    jwt.verify(token,process.env.ACCESS_TOKEN,function(err,user) {
-        if(err){
-            console.log(err);
+// Middleware kiểm tra quyền truy cập: chỉ admin hoặc chính người dùng mới có quyền
+const authUserMiddleware = async (req, res, next) => {
+    if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer")) {
+        return res.status(401).json({
+            success: false,
+            message: "Không có quyền truy cập"
+        })
+    }
 
-            return res.status(404).json({
-                message: 'The authentication token',
-                status: 'ERROR'
-            })
-        }
-        if(user?.isAdmin || user?.id === userId){
+    const accessToken = req.headers.authorization.split(' ')[1];
+    const userId = req.params.id;
+
+    try {
+        const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+        
+        // Kiểm tra xem người dùng có phải là admin hoặc chính họ không
+        if (decoded?.isAdmin || decoded?.id === userId) {
+            req.user = decoded;
             next();
-        }else{
-            return res.status(404).json({
-                message: 'The authentication token',
-                status: 'ERROR'
+        } else {
+            return res.status(403).json({
+                success: false,
+                message: "Không đủ quyền để thực hiện hành động này"
             })
         }
-    });
+    } catch (error) {
+        console.log(error);
+        return res.status(401).json({
+            success: false,
+            message: "Token xác thực không hợp lệ"
+        })
+    }
+}
+
+const adminAuthMiddleware = (req, res, next) => {
+    if(!req.user) {
+        return res.status(401).json({
+            message: "Người dùng chưa đăng nhập"
+        })
+    }
+    
+    if(req.user.role !== "Admin") {
+        return res.status(403).json({
+            message: "Không đủ quyền, bạn phải là quản trị viên"
+        })
+    }
+
+    next();
 }
 
 export {
     authMiddleware,
-    authUserMiddleware
+    authUserMiddleware,
+    adminAuthMiddleware
 }
