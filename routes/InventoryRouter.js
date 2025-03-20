@@ -5,7 +5,7 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 router.get('/paginated', InventoryController.getInventoriesPaginated);
 router.get('/get-all', InventoryController.getAllInventory);
-router.get('/:id', InventoryController.getInventoryById);
+router.get('/detail/:id', InventoryController.getInventoryById);
 router.post('/add', authMiddleware, InventoryController.addInventory);
 router.put('/update/:id', authMiddleware, InventoryController.updateInventory);
 router.delete('/delete/:id', authMiddleware, InventoryController.deleteInventory);

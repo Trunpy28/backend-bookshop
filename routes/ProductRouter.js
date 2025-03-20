@@ -18,5 +18,6 @@ router.get('/get-all-type', ProductController.getAllType);
 router.get('/get-products-paginated', ProductController.getProductsPaginated);
 router.get('/product-names', ProductController.getAllProductsName);
 router.get('/products-for-select', ProductController.getProductsForSelect);
+router.get('/by-genre/:genreId', ProductController.getProductsByGenre);
 
 export default router;

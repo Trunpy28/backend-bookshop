@@ -17,7 +17,7 @@ const productSchema = new mongoose.Schema({
     },
     countInStock: {
         type: Number,
-        required: true
+        default: 0
     },
     originalPrice: {
         type: Number,
@@ -36,7 +36,8 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     publicationYear: {
-        type: Number
+        type: Number,
+        required: true
     },
     weight: {
         type: String
@@ -45,7 +46,8 @@ const productSchema = new mongoose.Schema({
         type: String
     },
     pageCount: {
-        type: Number
+        type: Number,
+        required: true
     },
     format: {
         type: String
@@ -53,6 +55,10 @@ const productSchema = new mongoose.Schema({
     description: {
         type: String, // Rich text lưu trữ dưới dạng HTML hoặc Markdown
         required: true
+    },
+    rating: {
+        avgRating: { type: Number, default: 0 },
+        totalReviews: { type: Number, default: 0 }
     }
 }, {
     timestamps: true

@@ -10,6 +10,15 @@ const getAllGenres = async (req, res) => {
   }
 };
 
+const getGenreById = async (req, res) => {
+  try {
+    const genre = await GenreService.getGenreById(req.params.id);
+    res.status(200).json({ message: 'Lấy thể loại thành công', data: genre });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi khi lấy thể loại', error: error.message });
+  }
+};
+
 const createGenre = async (req, res) => {
   try {
     const genre = await GenreService.createGenre(req.body);
@@ -39,6 +48,7 @@ const deleteGenre = async (req, res) => {
 
 export default {
   getAllGenres,
+  getGenreById,
   createGenre,
   updateGenre,
   deleteGenre

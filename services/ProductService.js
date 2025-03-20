@@ -4,34 +4,41 @@ import mongoose from 'mongoose';
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 const createProduct = async (newProduct) => {
-    const { name, images, genre, countInStock, description, author, publisher, originalPrice, publicationYear, weight, dimensions, pageCount, format } = newProduct;
+    const { name, images, genre, description, author, publisher, originalPrice, publicationYear, weight, dimensions, pageCount, format } = newProduct;
 
-    // Kiểm tra các trường bắt buộc
-    if (!name || !images || !genre || !countInStock || !description || !author || !publisher || !originalPrice) {
+    
+    if (!name || !images || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
         throw new Error('Thiếu thông tin cần thiết để tạo sản phẩm.');
     }
-
-    // Kiểm tra mảng hình ảnh
+    
     if (!Array.isArray(images) || images.length === 0) {
         throw new Error('Danh sách hình ảnh không hợp lệ.');
     }
-
-    // Kiểm tra ID thể loại
+    
     if (!isValidObjectId(genre)) {
         throw new Error('ID thể loại không hợp lệ.');
     }
-
-    // Kiểm tra giá trị số
-    if (typeof originalPrice !== 'number' || originalPrice < 0) {
+    
+    
+    newProduct.originalPrice = Number(originalPrice);
+    newProduct.publicationYear = Number(publicationYear);
+    newProduct.pageCount = Number(pageCount);
+    
+    console.log(newProduct);
+    if (isNaN(newProduct.originalPrice) || newProduct.originalPrice < 0) {
         throw new Error('Giá bìa không hợp lệ.');
     }
-
-    if (typeof countInStock !== 'number' || countInStock < 0) {
-        throw new Error('Số lượng tồn kho không hợp lệ.');
+    
+    if (newProduct.publicationYear === undefined || isNaN(newProduct.publicationYear)) {
+        throw new Error('Năm xuất bản không hợp lệ.');
     }
-
+    
+    if (newProduct.pageCount === undefined || isNaN(newProduct.pageCount) || newProduct.pageCount < 0) {
+        throw new Error('Số trang không hợp lệ.');
+    }
+    
     try {
-        const checkProduct = await Product.findOne({ name });
+        const checkProduct = await Product.findOne({ name, publicationYear });
         if (checkProduct !== null) {
             return {
                 status: 'ERR',
@@ -39,21 +46,7 @@ const createProduct = async (newProduct) => {
             };
         }
 
-        const createdProduct = await Product.create({
-            name,
-            images,
-            genre,
-            countInStock,
-            description,
-            author,
-            publisher,
-            originalPrice,
-            publicationYear,
-            weight,
-            dimensions,
-            pageCount,
-            format
-        });
+        const createdProduct = await Product.create(newProduct);
 
         if (createdProduct) {
             return {
@@ -63,13 +56,40 @@ const createProduct = async (newProduct) => {
             };
         }
     } catch (e) {
-        throw new Error('Không thể tạo sản phẩm mới.');
+        throw new Error('Không thể tạo sản phẩm mới: ' + e.message);
     }
 };
 
 const updateProduct = async (id, data) => {
     if (!isValidObjectId(id)) {
         throw new Error('ID sản phẩm không hợp lệ.');
+    }
+
+    const { name, genre, description, author, publisher, originalPrice, publicationYear, pageCount } = data;
+
+    if (!name || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
+        throw new Error('Thiếu thông tin cần thiết để cập nhật sản phẩm.');
+    }
+
+    if (!isValidObjectId(genre)) {
+        throw new Error('ID thể loại không hợp lệ.');
+    }
+
+
+    data.originalPrice = Number(originalPrice);
+    data.publicationYear = Number(publicationYear);
+    data.pageCount = Number(pageCount);
+
+    if (isNaN(data.originalPrice) || data.originalPrice < 0) {
+        throw new Error('Giá bìa không hợp lệ.');
+    }
+
+    if (data.publicationYear === undefined || isNaN(data.publicationYear)) {
+        throw new Error('Năm xuất bản không hợp lệ.');
+    }
+
+    if (data.pageCount === undefined || isNaN(data.pageCount) || data.pageCount < 0) {
+        throw new Error('Số trang không hợp lệ.');
     }
 
     try {
@@ -93,7 +113,7 @@ const updateProduct = async (id, data) => {
             data: updatedProduct
         };
     } catch (e) {
-        throw new Error('Không thể cập nhật sản phẩm');
+        throw new Error('Không thể cập nhật sản phẩm: ' + e.message);
     }
 };
 
@@ -117,7 +137,7 @@ const deleteProduct = async (id) => {
             message: 'Xóa sản phẩm thành công!'
         };
     } catch (e) {
-        throw new Error('Không thể xóa sản phẩm.');
+        throw new Error('Không thể xóa sản phẩm: ' + e.message);
     }
 };
 
@@ -133,59 +153,66 @@ const deleteManyProduct = async (ids) => {
             message: 'Xóa các sản phẩm thành công!'
         };
     } catch (e) {
-        throw new Error('Không thể xóa các sản phẩm.');
+        throw new Error('Không thể xóa các sản phẩm: ' + e.message);
     }
 };
 
 const getAllProduct = async (limit = Number.MAX_SAFE_INTEGER, page = 1, sort, filter) => {
     try {
-        let totalProduct = await Product.countDocuments();
-        let allProduct = [];
-
-        if (sort) {
-            const objectSort = { [sort[0]]: sort[1] };
-            const allProductSort = await Product.find().limit(limit).skip(limit * (page - 1)).sort(objectSort);
-
-            return {
-                status: 'OK',
-                message: 'Lấy thông tin các sản phẩm thành công!',
-                data: allProductSort,
-                total: totalProduct,
-                pageCurrent: page,
-                totalPage: Math.ceil(totalProduct / limit)
-            };
-        }
-
+        const totalProduct = await Product.count();
+        
+        // Xây dựng query
+        let query = {};
+        
+        // Xử lý filter
         if (filter) {
-            totalProduct = await Product.countDocuments({ [filter[0]]: { $regex: filter[1], $options: 'i' } });
-            const allProductFilter = await Product.find({ [filter[0]]: { $regex: filter[1], $options: 'i' } }).limit(limit).skip(limit * (page - 1));
-
-            return {
-                status: 'OK',
-                message: 'Lấy thông tin các sản phẩm thành công!',
-                data: allProductFilter,
-                total: totalProduct,
-                pageCurrent: page,
-                totalPage: Math.ceil(totalProduct / limit)
-            };
+            const objFilter = JSON.parse(filter);
+            if (objFilter.genre) {
+                query.genre = objFilter.genre;
+            }
+            
+            if (objFilter.price) {
+                const minPrice = objFilter.price[0];
+                const maxPrice = objFilter.price[1];
+                query.originalPrice = { $gte: minPrice, $lte: maxPrice };
+            }
         }
-
-        if (!limit) {
-            allProduct = await Product.find();
-        } else {
-            allProduct = await Product.find().limit(limit).skip(limit * (page - 1));
+        
+        // Lấy sản phẩm với phân trang và sắp xếp
+        let queryCommand = Product.find(query)
+            .populate('genre', 'name')
+            .skip((page - 1) * limit)
+            .limit(limit);
+        
+        // Xử lý sort
+        if (sort) {
+            const objSort = JSON.parse(sort);
+            const sortBy = objSort.sortBy;
+            const order = objSort.order === 'asc' ? 1 : -1;
+            
+            if (sortBy) {
+                if (sortBy === 'price') {
+                    queryCommand = queryCommand.sort({ originalPrice: order });
+                } else if (sortBy === 'createdAt') {
+                    queryCommand = queryCommand.sort({ createdAt: order });
+                } else if (sortBy === 'rating') {
+                    queryCommand = queryCommand.sort({ "rating.avgRating": order });
+                }
+            }
         }
-
+        
+        const allProduct = await queryCommand.exec();
+        
         return {
             status: 'OK',
-            message: 'Lấy thông tin các sản phẩm thành công!',
+            message: 'Lấy danh sách sản phẩm thành công!',
             data: allProduct,
-            total: totalProduct,
+            totalProduct,
             pageCurrent: page,
             totalPage: Math.ceil(totalProduct / limit)
         };
     } catch (e) {
-        throw new Error('Không thể lấy danh sách sản phẩm.');
+        throw new Error('Không thể lấy danh sách sản phẩm: ' + e.message);
     }
 };
 
@@ -195,7 +222,7 @@ const getDetailProduct = async (id) => {
     }
 
     try {
-        const product = await Product.findById(id);
+        const product = await Product.findById(id).populate('genre', 'name');
         if (product === null) {
             return {
                 status: 'ERR',
@@ -209,7 +236,7 @@ const getDetailProduct = async (id) => {
             data: product
         };
     } catch (e) {
-        throw new Error('Không thể lấy thông tin sản phẩm.');
+        throw new Error('Không thể lấy thông tin sản phẩm: ' + e.message);
     }
 };
 
@@ -222,7 +249,7 @@ const getAllType = async () => {
             data: allType,
         };
     } catch (e) {
-        throw new Error('Không thể lấy thông tin các thể loại sản phẩm.');
+        throw new Error('Không thể lấy thông tin các thể loại sản phẩm: ' + e.message);
     }
 };
 
@@ -238,7 +265,7 @@ const getAllProductsName = async () => {
         const products = await Product.find({}, 'name _id');
         return products;
     } catch (error) {
-        throw new Error('Không thể lấy danh sách tên sản phẩm.');
+        throw new Error('Không thể lấy danh sách tên sản phẩm: ' + error.message);
     }
 };
 
@@ -250,12 +277,39 @@ const getProductsForSelect = async () => {
         author: 1,
         publicationYear: 1,
         originalPrice: 1,
-        'images.0': 1
+        images: 1
       });
       
       return products;
     } catch (error) {
-        throw new Error('Không thể lấy danh sách sản phẩm');
+        throw new Error('Không thể lấy danh sách sản phẩm: ' + error.message);
+    }
+};
+
+const getProductsByGenre = async (genreId, page = 1, limit = 10) => {
+    if (!isValidObjectId(genreId)) {
+        throw new Error('ID thể loại không hợp lệ.');
+    }
+
+    try {
+        const totalProducts = await Product.countDocuments({ genre: genreId });
+        
+        const products = await Product.find({ genre: genreId })
+            .populate('genre', 'name')
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .sort({ createdAt: -1 });
+
+        return {
+            status: 'OK',
+            message: 'Lấy danh sách sản phẩm theo thể loại thành công!',
+            data: products,
+            totalProducts,
+            currentPage: page,
+            totalPages: Math.ceil(totalProducts / limit)
+        };
+    } catch (e) {
+        throw new Error('Không thể lấy danh sách sản phẩm theo thể loại: ' + e.message);
     }
 };
 
@@ -269,5 +323,6 @@ export default {
     getAllType,
     getProductsPaginated,
     getAllProductsName,
-    getProductsForSelect
+    getProductsForSelect,
+    getProductsByGenre
 };

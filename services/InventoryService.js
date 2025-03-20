@@ -18,8 +18,7 @@ const getInventoryById = async (id) => {
 
 const addInventory = async (inventoryData) => {
     try {
-        // Kiểm tra dữ liệu đầu vào
-        if (!inventoryData.product || !inventoryData.batch || !inventoryData.quantity || !inventoryData.costPrice) {
+        if (!inventoryData.product || !inventoryData.batch || !inventoryData.quantity) {
             throw new Error('Thiếu thông tin bắt buộc.');
         }
         
@@ -32,6 +31,10 @@ const addInventory = async (inventoryData) => {
 
 const updateInventory = async (id, inventoryData) => {
     try {
+        if (!inventoryData.product || !inventoryData.batch || !inventoryData.quantity) {
+            throw new Error('Thiếu thông tin bắt buộc.');
+        }
+        
         return await Inventory.findByIdAndUpdate(id, inventoryData, { new: true })
             .populate('product')
             .populate('batch');

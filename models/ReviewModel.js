@@ -25,5 +25,8 @@ const reviewSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// Index để đảm bảo mỗi người dùng chỉ đánh giá một sản phẩm một lần
+reviewSchema.index({ product: 1, user: 1 }, { unique: true });
+
 const Review = mongoose.model('Review', reviewSchema);
 export default Review; 

@@ -19,7 +19,7 @@ const authMiddleware = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+        const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
         req.user = decoded;
         next();
     } catch (error) {
@@ -44,7 +44,7 @@ const authUserMiddleware = async (req, res, next) => {
     const userId = req.params.id;
 
     try {
-        const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET);
+        const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
         
         // Kiểm tra xem người dùng có phải là admin hoặc chính họ không
         if (decoded?.isAdmin || decoded?.id === userId) {
@@ -72,7 +72,7 @@ const adminAuthMiddleware = (req, res, next) => {
         })
     }
     
-    if(req.user.role !== "Admin") {
+    if(!req?.user?.isAdmin) {
         return res.status(403).json({
             message: "Không đủ quyền, bạn phải là quản trị viên"
         })

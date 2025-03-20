@@ -130,6 +130,22 @@ const getProductsForSelect = async (req, res) => {
   }
 };
 
+const getProductsByGenre = async (req, res) => {
+    try {
+        const { genreId } = req.params;
+        const { page = 1, limit = 10 } = req.query;
+        
+        const result = await ProductService.getProductsByGenre(
+            genreId, 
+            Number(page), 
+            Number(limit)
+        );
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Lỗi khi lấy sản phẩm theo thể loại', error: error.message });
+    }
+};
+
 export default {
     createProduct,
     updateProduct,
@@ -140,5 +156,6 @@ export default {
     getAllType,
     getProductsPaginated,
     getAllProductsName,
-    getProductsForSelect
+    getProductsForSelect,
+    getProductsByGenre
 };
