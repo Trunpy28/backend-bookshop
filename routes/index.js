@@ -8,6 +8,7 @@ import GenreRouter from './GenreRouter.js'
 import ReviewRouter from './ReviewRouter.js'
 import BatchRouter from './BatchRouter.js'
 import InventoryRouter from './InventoryRouter.js'
+import VoucherRouter from './VoucherRouter.js'
 
 const routes = (app) => {
     app.use('/api/user',UserRouter);
@@ -20,6 +21,7 @@ const routes = (app) => {
     app.use('/api/review', ReviewRouter);
     app.use('/api/batch', BatchRouter);
     app.use('/api/inventory', InventoryRouter);
+    app.use('/api/voucher', VoucherRouter);
 }
 
 export default routes;
