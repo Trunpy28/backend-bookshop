@@ -12,9 +12,9 @@ router.delete('/delete-user/:id',authMiddleware, UserController.deleteUser)
 router.get('/get-all',authMiddleware,UserController.getAllUser)
 router.get('/get-details/:id',authUserMiddleware,UserController.getDetailUser)
 router.post('/refresh-token',UserController.refreshToken)
-router.post('/delete-many',authMiddleware,UserController.deleteMany)
 router.post('/forgot-password/:email',UserController.forgotPassword)
 router.post('/verify-reset-password-token/:email', UserController.verifyResetPasswordToken)
 router.patch('/reset-password', UserController.resetPassword)
+router.patch('/change-password/:id', authUserMiddleware, UserController.changePassword)
 
 export default router;

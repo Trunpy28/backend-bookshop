@@ -2,14 +2,6 @@ import Review from '../models/ReviewModel.js';
 import Product from '../models/ProductModel.js';
 import mongoose from 'mongoose';
 
-const getAllReviews = async () => {
-    try {
-        return await Review.find().populate('user', 'name email');
-    } catch (error) {
-        throw new Error('Không thể lấy danh sách đánh giá.');
-    }
-};
-
 const getReviewById = async (id) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
         throw new Error('ID không hợp lệ.');
@@ -163,7 +155,6 @@ const deleteReview = async (id) => {
 };
 
 export default {
-    getAllReviews,
     getReviewById,
     getReviewsByProductId,
     createReview,

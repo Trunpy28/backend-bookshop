@@ -1,8 +1,10 @@
 import Inventory from '../models/InventoryModel.js';
+import Product from '../models/ProductModel.js';
+import mongoose from 'mongoose';
 
 const getAllInventory = async () => {
     try {
-        return await Inventory.find().populate('product').populate('batch');
+        return await Inventory.find().populate('product', "_id name genre").populate('batch');
     } catch (error) {
         throw new Error('Không thể lấy danh sách kho.');
     }
@@ -10,7 +12,7 @@ const getAllInventory = async () => {
 
 const getInventoryById = async (id) => {
     try {
-        return await Inventory.findById(id).populate('product').populate('batch');
+        return await Inventory.findById(id).populate('product', "_id name genre").populate('batch');
     } catch (error) {
         throw new Error('Không thể tìm thấy thông tin kho.');
     }
@@ -21,33 +23,62 @@ const addInventory = async (inventoryData) => {
         if (!inventoryData.product || !inventoryData.batch || !inventoryData.quantity) {
             throw new Error('Thiếu thông tin bắt buộc.');
         }
+
+        // Kiểm tra product tồn tại
+        const product = await Product.findById(inventoryData.product);
+        if (!product) {
+            throw new Error('Không tìm thấy sản phẩm');
+        }
+
+        // Kiểm tra số lượng hợp lệ
+        if (inventoryData.quantity < 0) {
+            throw new Error('Số lượng không được âm');
+        }
         
         const inventory = new Inventory(inventoryData);
-        return await inventory.save();
+        await inventory.save();
+
+        // Cập nhật countInStock của product (cộng thêm)
+        product.countInStock += inventoryData.quantity;
+        await product.save();
+
+        return inventory;
     } catch (error) {
         throw new Error(error.message || 'Không thể thêm vào kho.');
     }
 };
 
-const updateInventory = async (id, inventoryData) => {
-    try {
-        if (!inventoryData.product || !inventoryData.batch || !inventoryData.quantity) {
-            throw new Error('Thiếu thông tin bắt buộc.');
-        }
-        
-        return await Inventory.findByIdAndUpdate(id, inventoryData, { new: true })
-            .populate('product')
-            .populate('batch');
-    } catch (error) {
-        throw new Error('Không thể cập nhật thông tin kho.');
-    }
-};
-
 const deleteInventory = async (id) => {
     try {
-        return await Inventory.findByIdAndDelete(id);
+        // Kiểm tra inventory tồn tại
+        const inventory = await Inventory.findById(id);
+        if (!inventory) {
+            throw new Error('Không tìm thấy thông tin kho');
+        }
+
+        // Kiểm tra product tồn tại
+        const product = await Product.findById(inventory.product);
+        if (!product) {
+            throw new Error('Không tìm thấy sản phẩm');
+        }
+
+        // Kiểm tra nếu trừ đi sẽ âm
+        if (product.countInStock - inventory.quantity < 0) {
+            product.countInStock = 0;
+        }
+        else {
+            // Cập nhật countInStock của product (trừ đi)
+            product.countInStock -= inventory.quantity;
+        }
+
+        // Xóa inventory
+        await Inventory.findByIdAndDelete(id);
+
+        await product.save();
+
+        return { message: 'Xóa thông tin kho thành công' };
     } catch (error) {
-        throw new Error('Không thể xóa thông tin kho.');
+        throw new Error(error.message || 'Không thể xóa thông tin kho.');
     }
 };
 
@@ -57,7 +88,7 @@ const getInventoriesPaginated = async (page = 1, limit = 10) => {
         const inventories = await Inventory.find()
             .skip(skip)
             .limit(limit)
-            .populate('product')
+            .populate('product', "_id name genre")
             .populate('batch');
         const total = await Inventory.countDocuments();
         return { inventories, total };
@@ -70,7 +101,6 @@ export default {
     getAllInventory,
     getInventoryById,
     addInventory,
-    updateInventory,
     deleteInventory,
     getInventoriesPaginated
 };

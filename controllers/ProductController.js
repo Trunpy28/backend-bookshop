@@ -23,7 +23,7 @@ const createProduct = async (req, res) => {
         const product = await ProductService.createProduct(productData);
         res.status(201).json(product);
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi tạo sản phẩm', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -51,7 +51,7 @@ const updateProduct = async (req, res) => {
     } catch (error) {
       res.status(500).json({ message: error.message });
     }
-  };
+};
 
 const getDetailProduct = async (req, res) => {
     try {
@@ -59,7 +59,7 @@ const getDetailProduct = async (req, res) => {
         const product = await ProductService.getDetailProduct(id);
         res.status(200).json(product);
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi lấy thông tin sản phẩm', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -69,7 +69,7 @@ const deleteProduct = async (req, res) => {
         const result = await ProductService.deleteProduct(id);
         res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi xóa sản phẩm', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -79,26 +79,17 @@ const getAllProduct = async (req, res) => {
         const products = await ProductService.getAllProduct(limit, page, sort, filter);
         res.status(200).json(products);
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi lấy danh sách sản phẩm', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
 const deleteManyProduct = async (req, res) => {
     try {
-        const { ids } = req.body;
+        const ids = req.body.ids;
         const result = await ProductService.deleteManyProduct(ids);
         res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi xóa nhiều sản phẩm', error: error.message });
-    }
-};
-
-const getAllType = async (req, res) => {
-    try {
-        const types = await ProductService.getAllType();
-        res.status(200).json(types);
-    } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi lấy danh sách thể loại', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -108,7 +99,7 @@ const getProductsPaginated = async (req, res) => {
       const { products, total } = await ProductService.getProductsPaginated(Number(page), Number(limit));
       res.status(200).json({ products, total });
     } catch (error) {
-      res.status(500).json({ message: 'Lỗi khi lấy sản phẩm', error });
+      res.status(500).json({ message: error.message });
     }
 };
 
@@ -142,7 +133,7 @@ const getProductsByGenre = async (req, res) => {
         );
         res.status(200).json(result);
     } catch (error) {
-        res.status(500).json({ message: 'Lỗi khi lấy sản phẩm theo thể loại', error: error.message });
+        res.status(500).json({ message: error.message });
     }
 };
 
@@ -153,7 +144,6 @@ export default {
     deleteProduct,
     getAllProduct,
     deleteManyProduct,
-    getAllType,
     getProductsPaginated,
     getAllProductsName,
     getProductsForSelect,

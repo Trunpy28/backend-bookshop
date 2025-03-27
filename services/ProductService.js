@@ -4,10 +4,9 @@ import mongoose from 'mongoose';
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 const createProduct = async (newProduct) => {
-    const { name, images, genre, description, author, publisher, originalPrice, publicationYear, weight, dimensions, pageCount, format } = newProduct;
+    const { productCode, name, images, genre, description, author, publisher, originalPrice, publicationYear, weight, dimensions, pageCount, format } = newProduct;
 
-    
-    if (!name || !images || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
+    if (!productCode || !name || !images || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
         throw new Error('Thiếu thông tin cần thiết để tạo sản phẩm.');
     }
     
@@ -19,12 +18,10 @@ const createProduct = async (newProduct) => {
         throw new Error('ID thể loại không hợp lệ.');
     }
     
-    
     newProduct.originalPrice = Number(originalPrice);
     newProduct.publicationYear = Number(publicationYear);
     newProduct.pageCount = Number(pageCount);
     
-    console.log(newProduct);
     if (isNaN(newProduct.originalPrice) || newProduct.originalPrice < 0) {
         throw new Error('Giá bìa không hợp lệ.');
     }
@@ -38,12 +35,19 @@ const createProduct = async (newProduct) => {
     }
     
     try {
-        const checkProduct = await Product.findOne({ name, publicationYear });
-        if (checkProduct !== null) {
-            return {
-                status: 'ERR',
-                message: 'Sản phẩm đã tồn tại!'
-            };
+        // Kiểm tra mã hàng hoặc sản phẩm đã tồn tại chưa
+        const existingProduct = await Product.findOne({
+            $or: [
+                { productCode },
+                { name, publicationYear, author }
+            ]
+        });
+
+        if (existingProduct) {
+            if (existingProduct.productCode === productCode) {
+                throw new Error('Mã hàng đã tồn tại!');
+            }
+            throw new Error('Đã tồn tại sản phẩm khác với cùng tên, năm xuất bản và tác giả!');
         }
 
         const createdProduct = await Product.create(newProduct);
@@ -65,16 +69,15 @@ const updateProduct = async (id, data) => {
         throw new Error('ID sản phẩm không hợp lệ.');
     }
 
-    const { name, genre, description, author, publisher, originalPrice, publicationYear, pageCount } = data;
+    const { productCode, name, genre, description, author, publisher, originalPrice, publicationYear, pageCount } = data;
 
-    if (!name || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
+    if (!productCode || !name || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
         throw new Error('Thiếu thông tin cần thiết để cập nhật sản phẩm.');
     }
 
     if (!isValidObjectId(genre)) {
         throw new Error('ID thể loại không hợp lệ.');
     }
-
 
     data.originalPrice = Number(originalPrice);
     data.publicationYear = Number(publicationYear);
@@ -95,10 +98,23 @@ const updateProduct = async (id, data) => {
     try {
         const checkProduct = await Product.findById(id);
         if (checkProduct === null) {
-            return {
-                status: 'ERR',
-                message: 'Sản phẩm không tồn tại!'
-            };
+            throw new Error('Sản phẩm không tồn tại!');
+        }
+
+        // Kiểm tra mã hàng hoặc sản phẩm đã tồn tại ở sản phẩm khác chưa
+        const existingProduct = await Product.findOne({
+            _id: { $ne: id },
+            $or: [
+                { productCode },
+                { name, publicationYear, author }
+            ]
+        });
+
+        if (existingProduct) {
+            if (existingProduct.productCode === productCode) {
+                throw new Error('Mã hàng đã tồn tại!');
+            }
+            throw new Error('Đã tồn tại sản phẩm khác với cùng tên, năm xuất bản và tác giả!');
         }
 
         const updatedProduct = await Product.findByIdAndUpdate(
@@ -125,10 +141,7 @@ const deleteProduct = async (id) => {
     try {
         const checkProduct = await Product.findById(id);
         if (checkProduct === null) {
-            return {
-                status: 'ERR',
-                message: 'Sản phẩm không tồn tại!'
-            };
+            throw new Error('Sản phẩm không tồn tại!');
         }
 
         await Product.findByIdAndDelete(id);
@@ -138,22 +151,6 @@ const deleteProduct = async (id) => {
         };
     } catch (e) {
         throw new Error('Không thể xóa sản phẩm: ' + e.message);
-    }
-};
-
-const deleteManyProduct = async (ids) => {
-    if (!Array.isArray(ids) || ids.some(id => !isValidObjectId(id))) {
-        throw new Error('Danh sách ID không hợp lệ.');
-    }
-
-    try {
-        await Product.deleteMany({ _id: { $in: ids } });
-        return {
-            status: 'OK',
-            message: 'Xóa các sản phẩm thành công!'
-        };
-    } catch (e) {
-        throw new Error('Không thể xóa các sản phẩm: ' + e.message);
     }
 };
 
@@ -224,10 +221,7 @@ const getDetailProduct = async (id) => {
     try {
         const product = await Product.findById(id).populate('genre', 'name');
         if (product === null) {
-            return {
-                status: 'ERR',
-                message: 'Sản phẩm không tồn tại!'
-            };
+            throw new Error('Sản phẩm không tồn tại!');
         }
 
         return {
@@ -237,19 +231,6 @@ const getDetailProduct = async (id) => {
         };
     } catch (e) {
         throw new Error('Không thể lấy thông tin sản phẩm: ' + e.message);
-    }
-};
-
-const getAllType = async () => {
-    try {
-        const allType = await Product.distinct('genre');
-        return {
-            status: 'OK',
-            message: 'Lấy thông tin các thể loại sản phẩm thành công!',
-            data: allType,
-        };
-    } catch (e) {
-        throw new Error('Không thể lấy thông tin các thể loại sản phẩm: ' + e.message);
     }
 };
 
@@ -317,10 +298,8 @@ export default {
     createProduct,
     updateProduct,
     deleteProduct,
-    deleteManyProduct,
     getAllProduct,
     getDetailProduct,
-    getAllType,
     getProductsPaginated,
     getAllProductsName,
     getProductsForSelect,

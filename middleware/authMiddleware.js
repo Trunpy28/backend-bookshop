@@ -13,7 +13,6 @@ const authMiddleware = async (req, res, next) => {
     const accessToken = req.headers.authorization.split(' ')[1];
     if (!accessToken) {
         return res.status(401).json({
-            success: false,
             message: "Không có quyền truy cập"
         })
     }
@@ -25,7 +24,6 @@ const authMiddleware = async (req, res, next) => {
     } catch (error) {
         console.log(error);
         return res.status(401).json({
-            success: false,
             message: "Không có quyền truy cập"
         })
     }
@@ -35,7 +33,6 @@ const authMiddleware = async (req, res, next) => {
 const authUserMiddleware = async (req, res, next) => {
     if (!req.headers.authorization || !req.headers.authorization.startsWith("Bearer")) {
         return res.status(401).json({
-            success: false,
             message: "Không có quyền truy cập"
         })
     }
@@ -52,14 +49,12 @@ const authUserMiddleware = async (req, res, next) => {
             next();
         } else {
             return res.status(403).json({
-                success: false,
                 message: "Không đủ quyền để thực hiện hành động này"
             })
         }
     } catch (error) {
         console.log(error);
         return res.status(401).json({
-            success: false,
             message: "Token xác thực không hợp lệ"
         })
     }

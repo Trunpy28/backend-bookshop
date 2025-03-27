@@ -39,17 +39,6 @@ const addInventory = async (req, res) => {
   }
 };
 
-const updateInventory = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const inventoryData = req.body;
-    const updatedInventory = await InventoryService.updateInventory(id, inventoryData);
-    res.status(200).json(updatedInventory);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 const deleteInventory = async (req, res) => {
   try {
     const { id } = req.params;
@@ -64,7 +53,6 @@ export default {
   getAllInventory,
   getInventoryById,
   addInventory,
-  updateInventory,
   deleteInventory,
   getInventoriesPaginated,
 }; 

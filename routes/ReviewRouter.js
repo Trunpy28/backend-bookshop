@@ -4,7 +4,6 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.get('/get-all', ReviewController.getAllReviews);
 router.post('/create', authMiddleware, ReviewController.createReview);
 router.put('/update/:id', authMiddleware, ReviewController.updateReview);
 router.delete('/delete/:id', authMiddleware, ReviewController.deleteReview);

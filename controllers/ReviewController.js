@@ -1,14 +1,5 @@
 import ReviewService from '../services/ReviewService.js';
 
-const getAllReviews = async (req, res) => {
-  try {
-    const reviews = await ReviewService.getAllReviews();
-    res.status(200).json({ message: 'Lấy danh sách đánh giá thành công', data: reviews });
-  } catch (error) {
-    res.status(500).json({ message: 'Lỗi khi lấy danh sách đánh giá', error: error.message });
-  }
-};
-
 const createReview = async (req, res) => {
   try {
     const review = await ReviewService.createReview(req.body);
@@ -37,7 +28,6 @@ const deleteReview = async (req, res) => {
 };
 
 export default {
-  getAllReviews,
   createReview,
   updateReview,
   deleteReview

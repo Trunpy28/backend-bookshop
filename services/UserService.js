@@ -6,6 +6,8 @@ import EmailService from "./EmailService.js";
 
 const createUser = async (newUser) => {
   const { name, email, password, phone, address, avatar } = newUser;
+  
+  // Kiểm tra email tồn tại
   const checkUser = await User.findOne({
     email: email,
   });
@@ -15,16 +17,32 @@ const createUser = async (newUser) => {
       message: "Email đã tồn tại!",
     };
   }
-  const hash = bCrypt.hashSync(password, 10);
-  const createdUser = await User.create({
-    name,
+  
+  // Yêu cầu mật khẩu cho đăng ký thông thường
+  if (!password) {
+    return {
+      status: "ERR",
+      message: "Mật khẩu là trường bắt buộc!",
+    };
+  }
+  
+  // Hash mật khẩu
+  const hashedPassword = bCrypt.hashSync(password, 10);
+  
+  // Tạo user mới với các trường có giá trị
+  const userData = {
     email,
-    password: hash,
-    confirmPassword: hash,
-    phone,
-    address,
-    avatar,
-  });
+    password: hashedPassword,
+  };
+  
+  // Thêm các trường tùy chọn nếu được cung cấp
+  if (name) userData.name = name;
+  if (phone) userData.phone = phone;
+  if (address) userData.address = address;
+  if (avatar) userData.avatar = avatar;
+  
+  const createdUser = await User.create(userData);
+  
   if (createdUser) {
     return {
       status: "OK",
@@ -35,15 +53,27 @@ const createUser = async (newUser) => {
 
 const loginUser = async (userLogin) => {
   const { email, password } = userLogin;
+  
+  // Kiểm tra email tồn tại
   const checkUser = await User.findOne({
     email: email,
   }).select("+password");
+  
   if (checkUser === null) {
     return {
       status: "ERR",
       message: "Tài khoản không tồn tại!",
     };
   }
+  
+  // Kiểm tra xem tài khoản có password hay không (nếu là tài khoản OAuth sẽ không có)
+  if (!checkUser.password) {
+    return {
+      status: "ERR",
+      message: "Tài khoản này được đăng ký bằng Google hoặc Facebook. Vui lòng sử dụng phương thức đăng nhập tương ứng!",
+    };
+  }
+  
   const comparePassword = bCrypt.compareSync(password, checkUser.password);
 
   if (!comparePassword) {
@@ -71,6 +101,7 @@ const loginUser = async (userLogin) => {
 };
 
 const updateUser = async (id, data) => {
+  // Kiểm tra user tồn tại
   const checkUser = await User.findById(id);
 
   if (checkUser === null) {
@@ -80,7 +111,11 @@ const updateUser = async (id, data) => {
     };
   }
 
-  const updatedUser = await User.findByIdAndUpdate(id, data, { new: true });
+  // Chỉ cập nhật những trường được cung cấp
+  const updatedUser = await User.findByIdAndUpdate(id, 
+    { $set: data },
+    { new: true }
+  );
 
   return {
     status: "OK",
@@ -107,15 +142,6 @@ const deleteUser = async (id) => {
   };
 };
 
-const deleteMany = async (ids) => {
-  await User.deleteMany({ _id: { $in: ids } });
-
-  return {
-    status: "OK",
-    message: "Xóa các tài khoản thành công!",
-  };
-};
-
 const getAllUser = async () => {
   const allUser = await User.find();
 
@@ -129,10 +155,7 @@ const getAllUser = async () => {
 const getDetailUser = async (id) => {
   const user = await User.findById(id);
   if (user === null) {
-    resolve({
-      status: "ERR",
-      message: "Tài khoản không tồn tại!",
-    });
+    throw new Error("Tài khoản không tồn tại!");
   }
 
   return {
@@ -203,6 +226,52 @@ const createUserOAuth = async ({ email, name, avatar }) => {
   return await user.save();
 };
 
+const changePassword = async (id, { currentPassword, newPassword }) => {
+  // Kiểm tra user tồn tại
+  const user = await User.findById(id).select("+password");
+
+  if (!user) {
+    return {
+      status: "ERR",
+      message: "Tài khoản không tồn tại!",
+    };
+  }
+
+  // Kiểm tra nếu tài khoản được tạo qua OAuth (không có mật khẩu)
+  if (!user.password) {
+    return {
+      status: "ERR",
+      message: "Tài khoản này được đăng ký bằng Google hoặc Facebook và không có mật khẩu để thay đổi!",
+    };
+  }
+
+  // Kiểm tra mật khẩu hiện tại
+  const isPasswordCorrect = bCrypt.compareSync(currentPassword, user.password);
+  if (!isPasswordCorrect) {
+    return {
+      status: "ERR",
+      message: "Mật khẩu hiện tại không đúng!",
+    };
+  }
+
+  // Kiểm tra độ dài mật khẩu mới
+  if (newPassword.length < 8) {
+    return {
+      status: "ERR",
+      message: "Mật khẩu mới phải có ít nhất 8 ký tự!",
+    };
+  }
+
+  // Cập nhật mật khẩu mới
+  user.password = bCrypt.hashSync(newPassword, 10);
+  await user.save();
+
+  return {
+    status: "OK",
+    message: "Thay đổi mật khẩu thành công!",
+  };
+};
+
 export default {
   createUser,
   loginUser,
@@ -210,10 +279,10 @@ export default {
   deleteUser,
   getAllUser,
   getDetailUser,
-  deleteMany,
   forgotPassword,
   verifyResetPasswordToken,
   resetPassword,
   findUserByEmail,
   createUserOAuth,
+  changePassword,
 };

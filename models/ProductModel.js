@@ -1,13 +1,19 @@
 import mongoose from 'mongoose';
 
 const productSchema = new mongoose.Schema({
+    productCode: {
+        type: String,
+        required: true,
+        unique: true,
+        trim: true
+    },
     name: {
         type: String,
         required: true,
-        unique: true
+        trim: true
     },
     images: { 
-        type: [String], // Mảng các đường dẫn hình ảnh từ Cloudinary
+        type: [String],
         required: true 
     },
     genre: {

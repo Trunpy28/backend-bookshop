@@ -12,7 +12,6 @@ const userSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            //required: true,
             default: '',
             select: false
         },
@@ -26,7 +25,22 @@ const userSchema = new mongoose.Schema(
             match: /^\d+$/
         },
         address: {
-            type: String,
+            city: {
+                type: String,
+                default: ''
+            },
+            district: {
+                type: String,
+                default: ''
+            },
+            ward: {
+                type: String,
+                default: ''
+            },
+            detailedAddress: {
+                type: String,
+                default: ''
+            }
         },
         avatar: {
             type: String,

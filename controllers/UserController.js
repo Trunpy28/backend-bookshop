@@ -3,30 +3,44 @@ import JwtService from '../services/JwtService.js';
 
 const createUser = async (req,res) => {
     try {
-        const {name,email,password,confirmPassword,phone,address} = req.body;
-        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-        const ischeckEmail = regex.test(email);
-        if(!email || !password || !confirmPassword) {
+        const {email, password, confirmPassword} = req.body;
+        
+        // Kiểm tra email
+        if (!email) {
             return res.status(400).json({
                 status: 'ERR',
-                message: 'Hãy điền đầy đủ các thông tin bắt buộc!'
+                message: 'Email là trường bắt buộc!'
             })
-        }else if(!ischeckEmail){
+        }
+
+        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        const ischeckEmail = regex.test(email);
+        if(!ischeckEmail){
             return res.status(400).json({
                 status: 'ERR',
                 message: 'Hãy nhập email hợp lệ!'
             })
-        }else if(password !== confirmPassword){
-            return res.status(400).json({
-                status: 'ERR',
-                message: 'Mật khẩu không khớp!'
-            })
         }
 
+        // Kiểm tra password
+        if (!password) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Mật khẩu là trường bắt buộc!'
+            })
+        }
+        
         if(password.length < 8){
             return res.status(400).json({
                 status: 'ERR',
                 message: 'Mật khẩu phải có ít nhất 8 ký tự!'
+            })
+        }
+        
+        if (confirmPassword && password !== confirmPassword){
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Mật khẩu không khớp!'
             })
         }
 
@@ -42,19 +56,30 @@ const createUser = async (req,res) => {
 const loginUser = async (req,res) => {
     try {
         const {email, password} = req.body;
-        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-        const ischeckEmail = regex.test(email);
         
-        if(!email || !password) {
+        // Kiểm tra có email hay không
+        if(!email) {
             return res.status(200).json({
                 status: 'ERR',
-                message: 'The input is require'
+                message: 'Email là trường bắt buộc'
             })
         }
-        else if(!ischeckEmail){
+        
+        // Kiểm tra định dạng email
+        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        const ischeckEmail = regex.test(email);
+        if(!ischeckEmail){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'Please enter a valid email'
+                message: 'Email không hợp lệ'
+            })
+        }
+        
+        // Kiểm tra có password hay không
+        if(!password) {
+            return res.status(200).json({
+                status: 'ERR',
+                message: 'Mật khẩu là trường bắt buộc'
             })
         }
 
@@ -80,14 +105,26 @@ const updateUser = async (req,res) => {
     try {
         const userId = req.params.id;
         const data = req.body;
+        
         if(!userId){
             return res.status(200).json({
                 status: 'ERR',
-                message: 'The userId is required'
+                message: 'Id người dùng là bắt buộc'
             })
         }
 
-        const respond = await UserServices.updateUser(userId,data);
+        if(req.user.id !== userId) {
+            return res.status(403).json({
+                status: 'ERR',
+                message: 'Bạn không có quyền cập nhật thông tin của người dùng khác'
+            })
+        }
+        
+        if(data.email) {
+            delete data.email;
+        }
+
+        const respond = await UserServices.updateUser(userId, data);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -107,25 +144,6 @@ const deleteUser = async (req,res) => {
             })
         }
         const respond = await UserServices.deleteUser(userId);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
-    }
-}
-
-const deleteMany = async (req,res) => {
-    try {
-        const ids = req.body.ids;
-
-        if(!ids){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu danh sách ids'
-            })
-        }
-        const respond = await UserServices.deleteMany(ids);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -273,6 +291,52 @@ const resetPassword = async (req,res) => {
     }
 }
 
+const changePassword = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+        if (!userId) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Id người dùng là bắt buộc'
+            });
+        }
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Mật khẩu hiện tại và mật khẩu mới là bắt buộc'
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Mật khẩu mới phải có ít nhất 8 ký tự'
+            });
+        }
+
+        if (confirmNewPassword && newPassword !== confirmNewPassword) {
+            return res.status(400).json({
+                status: 'ERR',
+                message: 'Xác nhận mật khẩu không khớp'
+            });
+        }
+
+        const respond = await UserServices.changePassword(userId, { 
+            currentPassword, 
+            newPassword 
+        });
+        
+        return res.status(200).json(respond);
+    } catch (e) {
+        return res.status(404).json({
+            message: e.message || e
+        });
+    }
+};
+
 export default {
     createUser,
     loginUser,
@@ -281,9 +345,9 @@ export default {
     deleteUser,
     getAllUser,
     getDetailUser,
-    deleteMany,
     refreshToken,
     forgotPassword,
     verifyResetPasswordToken,
-    resetPassword
+    resetPassword,
+    changePassword
 }
