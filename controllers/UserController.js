@@ -293,46 +293,27 @@ const resetPassword = async (req,res) => {
 
 const changePassword = async (req, res) => {
     try {
-        const userId = req.params.id;
-        const { currentPassword, newPassword, confirmNewPassword } = req.body;
+        const { userId } = req.params;
 
-        if (!userId) {
-            return res.status(400).json({
-                status: 'ERR',
-                message: 'Id người dùng là bắt buộc'
-            });
+        if(userId !== req.user.id) {
+            return res.status(403).json({
+                message: 'Bạn không có quyền cập nhật mật khẩu của người dùng khác'
+            })
         }
+        
+        const { currentPassword, newPassword } = req.body;
 
         if (!currentPassword || !newPassword) {
             return res.status(400).json({
-                status: 'ERR',
-                message: 'Mật khẩu hiện tại và mật khẩu mới là bắt buộc'
+                message: 'Vui lòng nhập đầy đủ thông tin'
             });
         }
 
-        if (newPassword.length < 8) {
-            return res.status(400).json({
-                status: 'ERR',
-                message: 'Mật khẩu mới phải có ít nhất 8 ký tự'
-            });
-        }
-
-        if (confirmNewPassword && newPassword !== confirmNewPassword) {
-            return res.status(400).json({
-                status: 'ERR',
-                message: 'Xác nhận mật khẩu không khớp'
-            });
-        }
-
-        const respond = await UserServices.changePassword(userId, { 
-            currentPassword, 
-            newPassword 
-        });
-        
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e.message || e
+        const response = await UserServices.changePassword(userId, { currentPassword, newPassword });
+        return res.status(200).json(response);
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
         });
     }
 };

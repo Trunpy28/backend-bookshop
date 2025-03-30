@@ -4,8 +4,8 @@ import { authMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/create', authMiddleware, ReviewController.createReview);
-router.put('/update/:id', authMiddleware, ReviewController.updateReview);
-router.delete('/delete/:id', authMiddleware, ReviewController.deleteReview);
+router.post('/create/:productId', authMiddleware, ReviewController.createReview);
+router.delete('/delete/:reviewId', authMiddleware, ReviewController.deleteReview);
+router.get('/product/:productId', ReviewController.getReviewsByProductId);
 
 export default router; 

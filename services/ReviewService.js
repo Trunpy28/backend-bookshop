@@ -104,53 +104,29 @@ const createReview = async (reviewData) => {
     }
 };
 
-const updateReview = async (id, reviewData) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+const deleteReview = async (userId, reviewId) => {
+    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
         throw new Error('ID không hợp lệ.');
     }
-    if (!reviewData.comment || !reviewData.rating) {
-        throw new Error('Nội dung và đánh giá là bắt buộc.');
-    }
-    reviewData.rating = Number(reviewData.rating);
-    if (isNaN(reviewData.rating) || reviewData.rating < 1 || reviewData.rating > 5) {
-        throw new Error('Đánh giá phải là một số từ 1 đến 5.');
-    }
-    
     try {
-        const review = await Review.findById(id);
+        const review = await Review.findById(reviewId);
         if (!review) {
             throw new Error('Đánh giá không tồn tại.');
         }
-        
-        const updatedReview = await Review.findByIdAndUpdate(id, reviewData, { new: true });
-        
-        await calculateProductRating(review.product);
-        
-        return updatedReview;
-    } catch (error) {
-        throw new Error('Không thể cập nhật đánh giá: ' + error.message);
-    }
-};
 
-const deleteReview = async (id) => {
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        throw new Error('ID không hợp lệ.');
-    }
-    try {
-        const review = await Review.findById(id);
-        if (!review) {
-            throw new Error('Đánh giá không tồn tại.');
+        if (review.user.toString() !== userId) {
+            throw new Error('Bạn không có quyền xóa đánh giá này.');
         }
         
         const productId = review.product;
         
-        await Review.findByIdAndDelete(id);
+        await Review.findByIdAndDelete(reviewId);
         
         await calculateProductRating(productId);
         
         return { message: 'Đã xóa đánh giá thành công.' };
     } catch (error) {
-        throw new Error('Không thể xóa đánh giá: ' + error.message);
+        throw new Error(error.message);
     }
 };
 
@@ -158,7 +134,6 @@ export default {
     getReviewById,
     getReviewsByProductId,
     createReview,
-    updateReview,
     deleteReview,
     calculateProductRating
 };

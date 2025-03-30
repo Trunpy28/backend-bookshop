@@ -26,10 +26,8 @@ const createUser = async (newUser) => {
     };
   }
   
-  // Hash mật khẩu
   const hashedPassword = bCrypt.hashSync(password, 10);
   
-  // Tạo user mới với các trường có giá trị
   const userData = {
     email,
     password: hashedPassword,
@@ -226,49 +224,29 @@ const createUserOAuth = async ({ email, name, avatar }) => {
   return await user.save();
 };
 
-const changePassword = async (id, { currentPassword, newPassword }) => {
-  // Kiểm tra user tồn tại
-  const user = await User.findById(id).select("+password");
-
+const changePassword = async (userId, { currentPassword, newPassword }) => {
+  const user = await User.findById(userId).select('+password');
   if (!user) {
-    return {
-      status: "ERR",
-      message: "Tài khoản không tồn tại!",
-    };
+    throw new Error('Không tìm thấy người dùng');
   }
 
-  // Kiểm tra nếu tài khoản được tạo qua OAuth (không có mật khẩu)
-  if (!user.password) {
-    return {
-      status: "ERR",
-      message: "Tài khoản này được đăng ký bằng Google hoặc Facebook và không có mật khẩu để thay đổi!",
-    };
+  const isPasswordValid = bCrypt.compareSync(currentPassword, user.password);
+  if (!isPasswordValid) {
+    throw new Error('Mật khẩu hiện tại không chính xác');
   }
 
-  // Kiểm tra mật khẩu hiện tại
-  const isPasswordCorrect = bCrypt.compareSync(currentPassword, user.password);
-  if (!isPasswordCorrect) {
-    return {
-      status: "ERR",
-      message: "Mật khẩu hiện tại không đúng!",
-    };
-  }
-
-  // Kiểm tra độ dài mật khẩu mới
   if (newPassword.length < 8) {
-    return {
-      status: "ERR",
-      message: "Mật khẩu mới phải có ít nhất 8 ký tự!",
-    };
+    throw new Error('Mật khẩu mới phải có ít nhất 8 ký tự');
   }
 
-  // Cập nhật mật khẩu mới
-  user.password = bCrypt.hashSync(newPassword, 10);
+  const hashedPassword = bCrypt.hashSync(newPassword, 10);
+  user.password = hashedPassword;
+
   await user.save();
 
   return {
-    status: "OK",
-    message: "Thay đổi mật khẩu thành công!",
+    status: 'OK',
+    message: 'Đổi mật khẩu thành công'
   };
 };
 
