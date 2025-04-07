@@ -4,13 +4,16 @@ import { adminAuthMiddleware, authMiddleware } from '../middleware/authMiddlewar
 
 const router = express.Router();
 
-// Route cho người dùng
+// Route cho người dùng không cần đăng nhập
+router.get('/active', VoucherController.getActiveVouchers);
+
+// Route cho người dùng đã đăng nhập
 router.post('/apply', authMiddleware, VoucherController.applyVoucher);
 
 // Route cho admin
 router.post('/create', authMiddleware, adminAuthMiddleware, VoucherController.createVoucher);
 router.get('/getAll', authMiddleware, adminAuthMiddleware, VoucherController.getAllVouchers);
-router.get('/get/:id', authMiddleware, adminAuthMiddleware, VoucherController.getVoucherById);
+router.get('/get/:id', VoucherController.getVoucherById);
 router.put('/update/:id', authMiddleware, adminAuthMiddleware, VoucherController.updateVoucher);
 router.delete('/delete/:id', authMiddleware, adminAuthMiddleware, VoucherController.deleteVoucher);
 

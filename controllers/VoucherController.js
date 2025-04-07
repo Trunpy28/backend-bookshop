@@ -4,7 +4,6 @@ const createVoucher = async (req, res) => {
   try {
     const newVoucher = await VoucherService.createVoucher(req.body);
     return res.status(200).json({
-      message: 'SUCCESS',
       data: newVoucher
     });
   } catch (error) {
@@ -19,9 +18,22 @@ const getAllVouchers = async (req, res) => {
     const result = await VoucherService.getAllVouchers(req.query);
     
     return res.status(200).json({
-      message: 'SUCCESS',
       data: result.vouchers,
       pagination: result.pagination
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
+const getActiveVouchers = async (req, res) => {
+  try {
+    const vouchers = await VoucherService.getActiveVouchers();
+    
+    return res.status(200).json({
+      data: vouchers
     });
   } catch (error) {
     return res.status(400).json({
@@ -36,7 +48,6 @@ const getVoucherById = async (req, res) => {
     const voucher = await VoucherService.getVoucherById(id);
     
     return res.status(200).json({
-      message: 'SUCCESS',
       data: voucher
     });
   } catch (error) {
@@ -52,7 +63,6 @@ const updateVoucher = async (req, res) => {
     const updatedVoucher = await VoucherService.updateVoucher(id, req.body);
     
     return res.status(200).json({
-      message: 'SUCCESS',
       data: updatedVoucher
     });
   } catch (error) {
@@ -84,7 +94,6 @@ const applyVoucher = async (req, res) => {
     const result = await VoucherService.applyVoucher(code, orderValue);
     
     return res.status(200).json({
-      message: 'SUCCESS',
       data: result
     });
   } catch (error) {
@@ -97,6 +106,7 @@ const applyVoucher = async (req, res) => {
 export default {
   createVoucher,
   getAllVouchers,
+  getActiveVouchers,
   getVoucherById,
   updateVoucher,
   deleteVoucher,

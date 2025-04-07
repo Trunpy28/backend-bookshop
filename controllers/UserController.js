@@ -113,7 +113,7 @@ const updateUser = async (req,res) => {
             })
         }
 
-        if(req.user.id !== userId) {
+        if(req.user.id !== userId && !req.user.isAdmin) {
             return res.status(403).json({
                 status: 'ERR',
                 message: 'Bạn không có quyền cập nhật thông tin của người dùng khác'

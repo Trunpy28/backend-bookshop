@@ -273,7 +273,22 @@ const applyVoucher = async (code, orderValue) => {
   } catch (error) {
     throw new Error('Lỗi khi áp dụng voucher: ' + error.message);
   }
-}; 
+};
+
+const getActiveVouchers = async () => {
+  try {
+    // Lấy tất cả các voucher còn hiệu lực và sắp có hiệu lực
+    const now = new Date();
+    const vouchers = await Voucher.find({
+      isActive: true,
+      endDate: { $gte: now }
+    }).sort({ startDate: 1 });
+
+    return vouchers;
+  } catch (error) {
+    throw new Error('Lỗi khi lấy danh sách voucher: ' + error.message);
+  }
+};
 
 export default {
   createVoucher,
@@ -283,4 +298,5 @@ export default {
   updateVoucher,
   deleteVoucher,
   applyVoucher,
+  getActiveVouchers,
 };

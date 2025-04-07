@@ -10,6 +10,7 @@ import BatchRouter from './BatchRouter.js'
 import InventoryRouter from './InventoryRouter.js'
 import VoucherRouter from './VoucherRouter.js'
 import CartRouter from './CartRouter.js'
+import ShippingAddressRouter from './ShippingAddressRouter.js'
 
 const routes = (app) => {
     app.use('/api/user',UserRouter);
@@ -24,6 +25,7 @@ const routes = (app) => {
     app.use('/api/inventory', InventoryRouter);
     app.use('/api/voucher', VoucherRouter);
     app.use('/api/cart', CartRouter);
+    app.use('/api/shipping-address', ShippingAddressRouter);
 }
 
 export default routes;
