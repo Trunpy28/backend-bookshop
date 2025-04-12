@@ -1,6 +1,5 @@
 import ShippingAddressService from '../services/ShippingAddressService.js';
 
-// Lấy sổ địa chỉ của người dùng
 const getUserAddresses = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -11,7 +10,6 @@ const getUserAddresses = async (req, res) => {
   }
 };
 
-// Thêm địa chỉ mới
 const addAddress = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -23,7 +21,6 @@ const addAddress = async (req, res) => {
   }
 };
 
-// Cập nhật địa chỉ
 const updateAddress = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -36,7 +33,6 @@ const updateAddress = async (req, res) => {
   }
 };
 
-// Xóa địa chỉ
 const deleteAddress = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -48,7 +44,6 @@ const deleteAddress = async (req, res) => {
   }
 };
 
-// Đặt địa chỉ mặc định
 const setDefaultAddress = async (req, res) => {
   try {
     const userId = req.user.id;

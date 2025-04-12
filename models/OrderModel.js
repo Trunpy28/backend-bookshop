@@ -2,21 +2,33 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema(
     {
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            required: true 
+        },
         orderItems: [
             {
+                productCode: {
+                    type: String,
+                    required: true,
+                    unique: true,
+                    trim: true
+                },
                 name: {
                     type: String,
                     required: true,
+                    trim: true
                 },
-                amount: {
-                    type: Number,
-                    required: true,
-                },
-                image: { 
-                    type: String, 
+                images: { 
+                    type: [String],
                     required: true 
                 },
-                price: {
+                originalPrice: {
+                    type: Number,
+                    required: true
+                },
+                quantity: {
                     type: Number,
                     required: true
                 },
@@ -27,21 +39,15 @@ const orderSchema = new mongoose.Schema(
                 }
             }
         ],
-        shippingAddress: {
-            fullName: {
-                type: String,
-                required: true
-            },
-            address: {
-                type: String,
-                required: true
-            },
-            phone: {
-                type: String,
-                required: true
-            },
+        fullName: {
+            type: String,
+            required: true
         },
-        deliveryMethod: {
+        phone: {
+            type: String,
+            required: true
+        },
+        address: {
             type: String,
             required: true
         },
@@ -57,34 +63,28 @@ const orderSchema = new mongoose.Schema(
             type: Number,
             required: true
         },
+        discountPrice: {
+            type: Number,
+            required: true,
+            default: 0
+        },
         totalPrice: {
             type: Number,
             required: true
         },
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'User',
-            required: true 
-        },
-        isPaid: {
-            type: Boolean,
-            default: false,
-        },
-        paidAt: {
-            type: Date,
-            required: false
-        },
-        isDelivery: {
-            type: Boolean,
-            default: false
+        status: {
+            type: String,
+            enum: ['Pending', 'Shipping', 'Delivered', 'Cancelled'],
+            default: 'Pending'
         },
         deliveryAt: {
-            type: Date,
-            required: false
+            type: Date
         },
-        isCancelled: {
-            type: Boolean,
-            default: false
+        cancelledAt: {
+            type: Date
+        },
+        cancelReason: {
+            type: String
         }
     },
     {

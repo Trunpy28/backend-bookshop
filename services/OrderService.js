@@ -1,82 +1,90 @@
-import Order from '../models/OrderProduct.js';
+import Order from '../models/OrderModel.js';
 import Product from '../models/ProductModel.js';
-import EmailService from './EmailService.js';
+import Payment from '../models/PaymentModel.js';
+import mongoose from 'mongoose';
 
-const createOrder = async (newOrder) => {
-  const {
-    orderItems,
-    paymentMethod, 
-    deliveryMethod,
-    itemsPrice,
-    shippingPrice,
-    totalPrice,
-    fullName,
-    address,
-    phone,
-    user,
-    email
-  } = newOrder;
+const createOrder = async (orderData) => {
+  // Khởi tạo session để đảm bảo transaction
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
   try {
-    const invalidProducts = [];
-    const promises = orderItems.map(async (orderItem) => {
-      const productData = await Product.findOneAndUpdate(
-        {
-          _id: orderItem.product,
-          countInStock: {
-            $gte: orderItem.amount,
-          },
-        },
-        {
-          $inc: {
-            countInStock: -orderItem.amount,
-            selled: +orderItem.amount,
-          },
-        },
-        {
-          new: true,
-        }
-      );
-      if (productData === null) {
-        invalidProducts.push(orderItem.name);
-      }
-      return orderItem.name;
-    });
-    const result = await Promise.all(promises);
+    const { user, orderItems, fullName, phone, address, paymentMethod, itemsPrice, discountPrice } = orderData;
 
-    if (invalidProducts.length > 0) {
-      return {
-        status: "ERR",
-        message: `Các sản phẩm ${invalidProducts.join(",")} không đủ số lượng trong kho!`,
-      };
+    // Tính phí vận chuyển dựa trên tổng giá trị đơn hàng
+    let shippingPrice = 0;
+    if (itemsPrice > 0 && itemsPrice < 200000) {
+      shippingPrice = 25000;
+    } else if (itemsPrice >= 200000 && itemsPrice < 500000) {
+      shippingPrice = 10000;
     }
 
-    const createdOrder = await Order.create({
+    // Tính tổng giá trị cuối cùng
+    const totalPrice = itemsPrice + shippingPrice - discountPrice;
+
+    // Kiểm tra số lượng sản phẩm trong kho
+    const invalidProducts = [];
+    for (const orderItem of orderItems) {
+      const product = await Product.findById(orderItem.product).session(session);
+      if (!product || product.countInStock < orderItem.quantity) {
+        invalidProducts.push(orderItem.name);
+      }
+    }
+
+    if (invalidProducts.length > 0) {
+      await session.abortTransaction();
+      session.endSession();
+      throw new Error(`Các sản phẩm ${invalidProducts.join(", ")} không đủ số lượng trong kho!`);
+    }
+
+    // Cập nhật số lượng sản phẩm
+    for (const orderItem of orderItems) {
+      await Product.findByIdAndUpdate(
+        orderItem.product,
+        {
+          $inc: {
+            countInStock: -orderItem.quantity,
+            selled: +orderItem.quantity
+          }
+        },
+        { session }
+      );
+    }
+
+    const orderObject = {
+      user,
       orderItems,
-      shippingAddress: {
-        fullName,
-        address,
-        phone,
-      },
-      deliveryMethod,
+      fullName,
+      phone,
+      address,
       paymentMethod,
       itemsPrice,
       shippingPrice,
+      discountPrice,
       totalPrice,
-      user,
-    });
+      status: 'Pending'
+    };
 
-    if (createdOrder) {
-      await EmailService.sendEmailCreateOrder(email, createdOrder);
-      return {
-        status: "OK",
-        message: "Tạo đơn hàng thành công!",
-        data: createdOrder,
-      };
-    }
-  } catch (e) {
-    console.log(e.message);
-    throw new Error(e.message);
+    const [createdOrder] = await Order.create([orderObject], { session });
+
+    await Payment.create([{
+      order: createdOrder._id,
+      amount: totalPrice,
+      paymentMethod,
+      status: 'Pending'
+    }], { session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return {
+      status: "OK",
+      data: createdOrder
+    };
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new Error(`Không thể tạo đơn hàng: ${error.message}`);
   }
 };
 
@@ -239,19 +247,6 @@ const deleteOrder = async (id) => {
   }
 };
 
-const deleteMany = async (ids) => {
-  try {
-    await Order.deleteMany({_id: {$in: ids}});
-    
-    return {
-      status: 'OK',
-      message: 'Xóa các đơn hàng thành công!'
-    };
-  } catch (e) {
-    throw new Error(e);
-  }
-};
-
 export default{
   createOrder,
   getAllOrdersDetails,
@@ -260,5 +255,4 @@ export default{
   getAllOrder,
   updateOrder,
   deleteOrder,
-  deleteMany,
 };

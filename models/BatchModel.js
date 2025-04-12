@@ -7,7 +7,7 @@ const batchSchema = new mongoose.Schema({
     },
     dateReceived: {
         type: Date,
-        default: Date.now
+        required: true
     },
     discountPercentage: {
         type: Number,

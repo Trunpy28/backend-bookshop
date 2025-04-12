@@ -251,24 +251,23 @@ const applyVoucher = async (code, orderValue) => {
     }
 
     // Tính toán giảm giá
-    let discountAmount = 0;
+    let discountPrice = 0;
     
     if (voucher.discountType === 'percentage') {
-      discountAmount = Math.round((orderValue * voucher.discountValue) / 100);
+      discountPrice = Math.round((orderValue * voucher.discountValue) / 100);
     } else {
       // Loại fixed - giảm trực tiếp số tiền
-      discountAmount = voucher.discountValue;
+      discountPrice = voucher.discountValue;
     }
     
     // Đảm bảo số tiền giảm không vượt quá giá trị đơn hàng
-    if (discountAmount > orderValue) {
-      discountAmount = orderValue;
+    if (discountPrice > orderValue) {
+      discountPrice = orderValue;
     }
     
     return {
-      voucher,
-      discountAmount,
-      finalPrice: orderValue - discountAmount
+      status: 'OK',
+      discountPrice
     };
   } catch (error) {
     throw new Error('Lỗi khi áp dụng voucher: ' + error.message);

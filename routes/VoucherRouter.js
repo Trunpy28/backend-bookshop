@@ -14,6 +14,7 @@ router.post('/apply', authMiddleware, VoucherController.applyVoucher);
 router.post('/create', authMiddleware, adminAuthMiddleware, VoucherController.createVoucher);
 router.get('/getAll', authMiddleware, adminAuthMiddleware, VoucherController.getAllVouchers);
 router.get('/get/:id', VoucherController.getVoucherById);
+router.get('/getByCode/:code', VoucherController.getVoucherByCode);
 router.put('/update/:id', authMiddleware, adminAuthMiddleware, VoucherController.updateVoucher);
 router.delete('/delete/:id', authMiddleware, adminAuthMiddleware, VoucherController.deleteVoucher);
 

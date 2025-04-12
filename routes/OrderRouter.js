@@ -4,7 +4,7 @@ import { authUserMiddleware, authMiddleware } from '../middleware/authMiddleware
 
 const router = express.Router();
 
-router.post('/create/:id',authUserMiddleware,OrderController.createOrder);
+router.post('/create', authUserMiddleware, OrderController.createOrder);
 router.get('/get-all-orders-details/:id',authUserMiddleware,OrderController.getAllOrdersDetails)
 router.get('/get-details-order/:id',OrderController.getDetailsOrder)
 router.delete('/cancel-order/:id',OrderController.cancelOrder)

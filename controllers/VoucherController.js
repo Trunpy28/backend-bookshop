@@ -57,6 +57,20 @@ const getVoucherById = async (req, res) => {
   }
 };
 
+const getVoucherByCode = async (req, res) => {
+  try {
+    const { code } = req.params;
+    const voucher = await VoucherService.getVoucherByCode(code);
+    return res.status(200).json({
+      data: voucher
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
+
 const updateVoucher = async (req, res) => {
   try {
     const { id } = req.params;
@@ -108,6 +122,7 @@ export default {
   getAllVouchers,
   getActiveVouchers,
   getVoucherById,
+  getVoucherByCode,
   updateVoucher,
   deleteVoucher,
   applyVoucher,
