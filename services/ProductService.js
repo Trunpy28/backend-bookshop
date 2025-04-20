@@ -138,18 +138,27 @@ const deleteProduct = async (id) => {
         throw new Error('ID sản phẩm không hợp lệ.');
     }
 
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
         const checkProduct = await Product.findById(id);
         if (checkProduct === null) {
             throw new Error('Sản phẩm không tồn tại!');
         }
 
-        await Product.findByIdAndDelete(id);
+        await Product.findByIdAndDelete(id, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
         return {
             status: 'OK',
             message: 'Xóa sản phẩm thành công!'
         };
     } catch (e) {
+        await session.abortTransaction();
+        session.endSession();
         throw new Error('Không thể xóa sản phẩm: ' + e.message);
     }
 };

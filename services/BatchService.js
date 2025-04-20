@@ -1,4 +1,5 @@
 import Batch from '../models/BatchModel.js';
+import Product from '../models/ProductModel.js';
 
 const getAllBatches = async () => {
     try {
@@ -53,9 +54,42 @@ const updateBatch = async (id, batchData) => {
 };
 
 const deleteBatch = async (id) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-        return await Batch.findByIdAndDelete(id);
+        const inventories = await Inventory.find({ batch: id }, { session });
+        for (const inventory of inventories) {
+            // Kiểm tra product tồn tại
+            const product = await Product.findById(inventory.product);
+            if (!product) {
+                throw new Error('Không tìm thấy sản phẩm');
+            }
+
+            // Kiểm tra nếu trừ đi sẽ âm
+            if (product.countInStock - inventory.quantity < 0) {
+                product.countInStock = 0;
+            }
+            else {
+                // Cập nhật countInStock của product (trừ đi)
+                product.countInStock -= inventory.quantity;
+            }
+
+            await product.save({ session });
+        }
+
+        await Inventory.deleteMany({ batch: id }, { session });
+
+        await Batch.findByIdAndDelete(id, { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        return {
+            message: 'Xóa lô hàng thành công!'
+        };
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         throw new Error('Không thể xóa lô hàng.');
     }
 };

@@ -1,6 +1,8 @@
 import OrderServices from '../services/OrderService.js';
 import CartService from '../services/CartService.js';
 import VoucherService from '../services/VoucherService.js';
+import UserService from '../services/UserService.js';
+import EmailService from '../services/EmailService.js';
 
 const createOrder = async (req, res) => {
     try {
@@ -43,7 +45,7 @@ const createOrder = async (req, res) => {
         if (voucherCode) {
             const voucherResult = await VoucherService.applyVoucher(voucherCode, itemsPrice);
             if (voucherResult.status === 'OK') {
-                discountPrice = voucherResult.discountAmount;
+                discountPrice = voucherResult.discountPrice;
             }
         }
 
@@ -59,14 +61,24 @@ const createOrder = async (req, res) => {
             discountPrice
         };
 
-        const orderResponse = await OrderServices.createOrder(orderData);
+        const newOrder = await OrderServices.createOrder(orderData);
 
-        if (orderResponse.status === 'OK') {
+        if (newOrder) {
+            // Xóa giỏ hàng sau khi đặt hàng thành công
             await CartService.clearCart(userId);
+            
+            // Lấy email người dùng
+            const user = await UserService.findUserById(userId);
+            
+            // Gửi email xác nhận đơn hàng
+            if (user && user.email) {
+                EmailService.sendEmailCreateOrder(user.email, newOrder);
+            }
         }
 
         return res.status(200).json({
-            message: 'Tạo đơn hàng thành công!'
+            status: 'OK',
+            data: newOrder
         });
     } catch (error) {
         return res.status(500).json({
@@ -75,9 +87,9 @@ const createOrder = async (req, res) => {
     }
 }
 
-const getAllOrdersDetails = async (req, res) => {
+const getMyOrders = async (req, res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.user.id;
 
         if(!userId){
             return res.status(200).json({
@@ -85,7 +97,7 @@ const getAllOrdersDetails = async (req, res) => {
                 message: 'Thiếu userId'
             })
         }
-        const respond = await OrderServices.getAllOrdersDetails(userId);
+        const respond = await OrderServices.getMyOrders(userId);
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
@@ -97,15 +109,23 @@ const getAllOrdersDetails = async (req, res) => {
 const getDetailsOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
+        const userId = req.user.id;
 
         if(!orderId){
             return res.status(200).json({
-                status: 'ERR',
                 message: 'Thiếu orderId'
             })
         }
-        const respond = await OrderServices.getDetailsOrder(orderId);
-        return res.status(200).json(respond);
+        const order = await OrderServices.getDetailsOrder(orderId);
+        if(order.user !== userId && !req.user.isAdmin){
+            return res.status(200).json({
+                message: 'Bạn không có quyền truy cập vào đơn hàng này'
+            })
+        }
+
+        return res.status(200).json({
+            data: order
+        });
     } catch (e) {
         return res.status(404).json({
             message: e
@@ -116,49 +136,22 @@ const getDetailsOrder = async (req, res) => {
 const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
-        const data = req.body;
+        const userId = req.user.id;
         if(!orderId){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu productId'
-            })
-        }
-        const respond = await OrderServices.cancelOrder(orderId, data);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
-    }
-}
-
-const getAllOrder = async (req, res) => {
-    try {
-        const respond = await OrderServices.getAllOrder();
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
-    }
-}
-
-const updateOrder = async (req, res) => {
-    try {
-        const orderId = req.params.id;
-        const data = req.body;
-        if(!orderId){
-            return res.status(200).json({
+            return res.status(400).json({
                 status: 'ERR',
                 message: 'Thiếu orderId'
             })
         }
-
-        const respond = await OrderServices.updateOrder(orderId, data);
-        return res.status(200).json(respond);
+        const message = await OrderServices.cancelOrder(orderId, userId);
+        return res.status(200).json({
+            status: 'OK',
+            message
+        });
     } catch (e) {
-        return res.status(404).json({
-            message: e
+        return res.status(400).json({
+            status: 'ERR',
+            message: e.message
         })
     }
 }
@@ -182,32 +175,68 @@ const deleteOrder = async (req, res) => {
     }
 }
 
-const deleteMany = async (req, res) => {
+const getPaginatedOrders = async (req, res) => {
     try {
-        const ids = req.body.ids;
+        const { 
+            page = 1, 
+            limit = 10, 
+            orderId, 
+            fullName, 
+            phone, 
+            status,
+            paymentMethod,
+            paymentStatus,
+        } = req.query;
 
-        if(!ids){
-            return res.status(200).json({
-                status: 'ERR',
-                message: 'Thiếu danh sách ids'
-            })
-        }
-        const respond = await OrderServices.deleteMany(ids);
-        return res.status(200).json(respond);
-    } catch (e) {
-        return res.status(404).json({
-            message: e
-        })
+        // Chuyển đổi tham số truy vấn
+        const options = {
+            page,
+            limit,
+            orderId,
+            fullName,
+            phone,
+            status,
+            paymentMethod,
+            paymentStatus,
+        };
+
+        const result = await OrderServices.getPaginatedOrders(options);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({
+            message: error.message
+        });
     }
 }
 
+const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { orderStatus, paymentStatus } = req.body;
+
+    if (!id) {
+      return res.status(400).json({
+        status: 'ERR',
+        message: 'Thiếu ID đơn hàng'
+      });
+    }
+
+    const response = await OrderServices.updateOrderStatus(id, { orderStatus, paymentStatus });
+    
+    return res.status(200).json(response);
+  } catch (e) {
+    return res.status(404).json({
+      message: e
+    });
+  }
+};
+
 export default {
     createOrder,
-    getAllOrdersDetails,
+    getMyOrders,
     getDetailsOrder,
     cancelOrder,
-    getAllOrder,
-    updateOrder,
     deleteOrder,
-    deleteMany
+    getPaginatedOrders,
+    updateOrderStatus
 }

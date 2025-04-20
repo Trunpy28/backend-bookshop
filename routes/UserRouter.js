@@ -15,6 +15,6 @@ router.post('/refresh-token',UserController.refreshToken)
 router.post('/forgot-password/:email',UserController.forgotPassword)
 router.post('/verify-reset-password-token/:email', UserController.verifyResetPasswordToken)
 router.patch('/reset-password', UserController.resetPassword)
-router.patch('/change-password/:userId', authUserMiddleware, UserController.changePassword)
+router.patch('/change-password/:userId', authMiddleware, UserController.changePassword)
 
 export default router;

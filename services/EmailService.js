@@ -24,12 +24,17 @@ const transporter = nodemailer.createTransport({
 const sendEmailCreateOrder = async (email, order) => {
   const {
     orderItems,
-    shippingAddress: { fullName, address, phone },
+    fullName,
+    phone,
+    address,
+    paymentMethod,
     itemsPrice,
     shippingPrice,
+    discountPrice,
     totalPrice,
+    status,
     createdAt,
-    _id: id
+    _id
   } = order;
 
   const date = new Date(createdAt);
@@ -43,24 +48,29 @@ const sendEmailCreateOrder = async (email, order) => {
     second: "2-digit",
     hour12: false
   };
-  const formattedDate = date.toLocaleString('vi-VN',options);
+  const formattedDate = date.toLocaleString('vi-VN', options);
 
   const sourceHtml = fs.readFileSync(path.resolve(__dirname, "../templateEmails/createOrder.html"), { encoding: "utf8" });
   const template = handlebars.compile(sourceHtml);
   const context = {
-    fullName: fullName,
-    address: address,
-    phone: phone,
-    formattedDate: formattedDate,
+    fullName,
+    address,
+    phone,
+    formattedDate,
     orderItems: orderItems.map(item => ({
       name: item.name,
-      price: item.price.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
-      amount: item.amount,
-      subtotal: (item.price * item.amount).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+      price: item.originalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+      amount: item.quantity,
+      subtotal: (item.originalPrice * item.quantity).toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+      image: item.images[0]
     })),
+    paymentMethod: getPaymentMethodText(paymentMethod),
+    status: getStatusText(status),
     itemsPrice: itemsPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
     shippingPrice: shippingPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
-    totalPrice: totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
+    discountPrice: discountPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+    totalPrice: totalPrice.toLocaleString("vi-VN", { style: "currency", currency: "VND" }),
+    orderId: _id
   };
   const orderHtml = template(context);
 
@@ -71,6 +81,36 @@ const sendEmailCreateOrder = async (email, order) => {
     text: "Đặt hàng thành công!",
     html: orderHtml,
   });
+};
+
+// Hàm hỗ trợ chuyển đổi phương thức thanh toán
+const getPaymentMethodText = (method) => {
+  switch (method) {
+    case 'COD':
+      return 'Thanh toán khi nhận hàng';
+    case 'VNPAY':
+      return 'Thanh toán qua VNPAY';
+    case 'PAYPAL':
+      return 'Thanh toán qua PayPal';
+    default:
+      return 'Chưa xác định';
+  }
+};
+
+// Hàm hỗ trợ chuyển đổi trạng thái đơn hàng
+const getStatusText = (status) => {
+  switch (status) {
+    case 'Pending':
+      return 'Đang chờ xử lý';
+    case 'Shipping':
+      return 'Đang giao hàng';
+    case 'Delivered':
+      return 'Đã giao hàng';
+    case 'Cancelled':
+      return 'Đã hủy';
+    default:
+      return 'Đang chờ xử lý';
+  }
 };
 
 const sendEmailResetPassword = async (email, token) => {

@@ -19,6 +19,8 @@ const getInventoryById = async (id) => {
 };
 
 const addInventory = async (inventoryData) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         if (!inventoryData.product || !inventoryData.batch || !inventoryData.quantity) {
             throw new Error('Thiếu thông tin bắt buộc.');
@@ -36,19 +38,26 @@ const addInventory = async (inventoryData) => {
         }
         
         const inventory = new Inventory(inventoryData);
-        await inventory.save();
+        await inventory.save({ session });
 
         // Cập nhật countInStock của product (cộng thêm)
         product.countInStock += inventoryData.quantity;
-        await product.save();
+        await product.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         return inventory;
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         throw new Error(error.message || 'Không thể thêm vào kho.');
     }
 };
 
 const deleteInventory = async (id) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
         // Kiểm tra inventory tồn tại
         const inventory = await Inventory.findById(id);
@@ -72,12 +81,17 @@ const deleteInventory = async (id) => {
         }
 
         // Xóa inventory
-        await Inventory.findByIdAndDelete(id);
+        await Inventory.findByIdAndDelete(id, { session });
 
-        await product.save();
+        await product.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
 
         return { message: 'Xóa thông tin kho thành công' };
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         throw new Error(error.message || 'Không thể xóa thông tin kho.');
     }
 };

@@ -49,11 +49,11 @@ const updateBatch = async (req, res) => {
 const deleteBatch = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedBatch = await BatchService.deleteBatch(id);
-    if (!deletedBatch) {
+    const result = await BatchService.deleteBatch(id);
+    if (!result) {
       return res.status(404).json({ message: 'Không tìm thấy lô hàng' });
     }
-    res.status(200).json({ message: 'Xóa lô hàng thành công' });
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

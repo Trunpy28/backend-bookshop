@@ -12,13 +12,10 @@ const orderSchema = new mongoose.Schema(
                 productCode: {
                     type: String,
                     required: true,
-                    unique: true,
-                    trim: true
                 },
                 name: {
                     type: String,
                     required: true,
-                    trim: true
                 },
                 images: { 
                     type: [String],
@@ -48,10 +45,6 @@ const orderSchema = new mongoose.Schema(
             required: true
         },
         address: {
-            type: String,
-            required: true
-        },
-        paymentMethod: {
             type: String,
             required: true
         },

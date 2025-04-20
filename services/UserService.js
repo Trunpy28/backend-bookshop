@@ -250,6 +250,10 @@ const changePassword = async (userId, { currentPassword, newPassword }) => {
   };
 };
 
+const findUserById = async (userId) => {
+  return await User.findById(userId);
+};
+
 export default {
   createUser,
   loginUser,
@@ -261,6 +265,7 @@ export default {
   verifyResetPasswordToken,
   resetPassword,
   findUserByEmail,
+  findUserById,
   createUserOAuth,
   changePassword,
 };
