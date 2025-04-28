@@ -2,6 +2,7 @@ import axios from "axios";
 import OrderServices from '../services/OrderService.js';
 import { Convert } from "easy-currencies";
 import mongoose from "mongoose";
+import Payment from "../models/PaymentModel.js";
 
 //Chuyển đổi tỷ giá tiền sang USD
 
@@ -32,7 +33,7 @@ const getPayPalAccessToken = async () => {
 /**
  * Tạo PayPal order
 */
-const createOrder = async (req, res) => {
+const createPayment = async (req, res) => {
   try {
     const { amount } = req.body; // Lấy số tiền từ client (mặc định là VND)
     const accessToken = await getPayPalAccessToken();
@@ -91,11 +92,7 @@ const captureOrder = async (req, res) => {
     const accessToken = await getPayPalAccessToken();
 
     // Lấy chi tiết đơn hàng từ cơ sở dữ liệu
-    const orderFindResult = await OrderServices.getDetailsOrder(orderId);
-
-    if (orderFindResult.status === "ERR") {
-      return res.status(404).json({ message: "Không tìm thấy đơn hàng trong hệ thống" });
-    }
+    let order = await OrderServices.getDetailsOrder(orderId);
 
     // Thực hiện capture thanh toán PayPal
     const captureResponse = await axios.post(
@@ -113,44 +110,68 @@ const captureOrder = async (req, res) => {
 
     // Kiểm tra trạng thái thanh toán
     switch (captureData.status) {
-      case "COMPLETED":
+      case "COMPLETED": {
         // Cập nhật trạng thái thanh toán của đơn hàng
-        const updateResult = await OrderServices.updateOrder(orderId, {
-          isPaid: true,
-          paidAt: new Date(),
+        await Payment.findByIdAndUpdate(order.payment._id, {
+          $set: {
+            status: "Completed",
+            transactionId: captureData.id,
+            paidAt: new Date(),
+          }
         });
 
-        if (updateResult.status === "ERR") {
-          return res.status(500).json({ message: "Cập nhật trạng thái thanh toán thất bại" });
-        }
+        order = await OrderServices.getDetailsOrder(orderId);
 
         return res.status(200).json({
-          message: "Thanh toán thành công và đơn hàng đã được cập nhật",
-          order: updateResult.data,
+          message: "Thanh toán thành công",
+          order
+        });
+      }
+
+      case "DECLINED": {
+        await Payment.findByIdAndUpdate(order.payment._id, {
+          $set: {
+            status: "Failed",
+          }
         });
 
-      case "PENDING":
-        return res.status(202).json({ message: "Thanh toán đang được xử lý, vui lòng chờ" });
+        order = await OrderServices.getDetailsOrder(orderId);
 
-      case "DECLINED":
-        return res.status(400).json({ message: "Thanh toán bị từ chối, vui lòng thử lại" });
+        return res.status(400).json({ message: "Thanh toán bị từ chối, vui lòng thử lại", order });
+      }
 
-      case "FAILED":
-        return res.status(400).json({ message: "Thanh toán thất bại, vui lòng kiểm tra lại thông tin" });
+      case "FAILED": {
+        await Payment.findByIdAndUpdate(order.payment._id, {
+          $set: {
+            status: "Failed",
+          }
+        });
 
-      default:
-        return res.status(500).json({ message: `Trạng thái không xác định: ${captureData.status}` });
+        order = await OrderServices.getDetailsOrder(orderId);
+        return res.status(400).json({ message: "Thanh toán thất bại, vui lòng kiểm tra lại thông tin", order });
+      }
+
+      default: {
+        await Payment.findByIdAndUpdate(order.payment._id, {
+          $set: {
+            status: "Failed",
+          }
+        });
+
+        order = await OrderServices.getDetailsOrder(orderId);
+        return res.status(500).json({ message: `Trạng thái không xác định`, order });
+      }
     }
+
   } catch (error) {
-    console.error(error.response?.data || error.message);
     return res.status(500).json({
       error: "Đã xảy ra lỗi khi xử lý thanh toán PayPal",
-      details: error.response?.data || error.message,
+      details: error?.message || error.response?.data,
     });
   }
 };
 
 export default {
-  createOrder,
+  createPayment,
   captureOrder,
 };

@@ -73,6 +73,9 @@ const orderSchema = new mongoose.Schema(
         deliveryAt: {
             type: Date
         },
+        deliveredAt: {
+            type: Date
+        },
         cancelledAt: {
             type: Date
         },

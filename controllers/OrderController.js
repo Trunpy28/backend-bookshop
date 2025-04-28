@@ -78,7 +78,7 @@ const createOrder = async (req, res) => {
 
         return res.status(200).json({
             status: 'OK',
-            data: newOrder
+            order: newOrder
         });
     } catch (error) {
         return res.status(500).json({
@@ -137,13 +137,15 @@ const cancelOrder = async (req, res) => {
     try {
         const orderId = req.params.id;
         const userId = req.user.id;
+        const cancelReason = req.body.cancelReason;
         if(!orderId){
             return res.status(400).json({
                 status: 'ERR',
                 message: 'Thiếu orderId'
             })
         }
-        const message = await OrderServices.cancelOrder(orderId, userId);
+        
+        const message = await OrderServices.cancelOrder(orderId, userId, cancelReason);
         return res.status(200).json({
             status: 'OK',
             message

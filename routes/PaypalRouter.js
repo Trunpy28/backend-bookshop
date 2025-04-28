@@ -1,13 +1,13 @@
 import express from 'express';
 import paypalController from '../controllers/PaypalController.js';
-import { authUserMiddleware } from '../middleware/authMiddleware.js';
+import { authMiddleware, authUserMiddleware } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// Route tạo order
-router.post("/create-order/:id", authUserMiddleware, paypalController.createOrder);
+// Route tạo thanh toán trên hệ thống Paypal
+router.post("/create-payment", authMiddleware, paypalController.createPayment);
 
-// Route xác nhận order
-router.post("/capture-order/user/:id/order/:orderId", authUserMiddleware, paypalController.captureOrder);
+// Route xác nhận đã thanh toán trên hệ thống Paypal
+router.post("/capture-order/user/:userId/order/:orderId", authUserMiddleware, paypalController.captureOrder);
 
 export default router;

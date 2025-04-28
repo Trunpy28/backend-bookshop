@@ -103,7 +103,7 @@ const loginUser = async (req,res) => {
 
 const updateUser = async (req,res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.params.userId;
         const data = req.body;
         
         if(!userId){
@@ -165,7 +165,7 @@ const getAllUser = async (req,res) => {
 
 const getDetailUser = async (req,res) => {
     try {
-        const userId = req.params.id;
+        const userId = req.params.userId;
 
         if(!userId){
             return res.status(200).json({

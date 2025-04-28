@@ -4,6 +4,29 @@ import Payment from '../models/PaymentModel.js';
 import mongoose from 'mongoose';
 import User from '../models/UserModel.js';
 
+const getDetailsOrder = async (orderId) => {
+  try {
+    const order = await Order.findById(orderId);
+
+    if (order === null) {
+      throw new Error('Đơn hàng không tồn tại!');
+    }
+
+    // Lấy thông tin thanh toán
+    const payment = await Payment.findOne({ order: orderId });
+
+    // Kết hợp thông tin đơn hàng và thanh toán
+    const orderWithPayment = {
+      ...order.toObject(),
+      payment: payment ? payment.toObject() : null
+    };
+
+    return orderWithPayment;
+  } catch (e) {
+    throw e;
+  }
+};
+
 const createOrder = async (orderData) => {
   // Khởi tạo session để đảm bảo transaction
   const session = await mongoose.startSession();
@@ -77,7 +100,8 @@ const createOrder = async (orderData) => {
     await session.commitTransaction();
     session.endSession();
 
-    return createdOrder;
+    const order = await getDetailsOrder(createdOrder._id);
+    return order;
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -93,37 +117,11 @@ const getMyOrders = async (userId) => {
 
     return myOrders;
   } catch (e) {
-    throw new Error(e);
+    throw e;
   }
 };
 
-const getDetailsOrder = async (orderId) => {
-  try {
-    const order = await Order.findById(orderId);
-
-    if (order === null) {
-      return {
-        status: "ERR",
-        message: "Đơn hàng không tồn tại!",
-      };
-    }
-
-    // Lấy thông tin thanh toán
-    const payment = await Payment.findOne({ order: orderId });
-
-    // Kết hợp thông tin đơn hàng và thanh toán
-    const orderWithPayment = {
-      ...order.toObject(),
-      payment: payment ? payment.toObject() : null
-    };
-
-    return orderWithPayment;
-  } catch (e) {
-    throw new Error(e);
-  }
-};
-
-const cancelOrder = async (orderId, userId) => {
+const cancelOrder = async (orderId, userId, cancelReason) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -154,7 +152,8 @@ const cancelOrder = async (orderId, userId) => {
       orderId,
       {
         status: 'Cancelled',
-        cancelledAt: new Date()
+        cancelledAt: new Date(),
+        cancelReason: cancelReason
       },
       {
         new: true,
@@ -192,32 +191,22 @@ const cancelOrder = async (orderId, userId) => {
   }
 };
 
-const deleteOrder = async (id) => {
+const deleteOrder = async (orderId) => {
   try {
-    const checkOrder = await Order.findById(id);
+    const checkOrder = await Order.findById(orderId);
 
     if(checkOrder === null) {
-      return {
-        status: 'OK',
-        message: 'Đơn hàng không tồn tại!'
-      };
+      throw new Error('Đơn hàng không tồn tại!');
     }
     
     if(checkOrder.status === 'Cancelled') {
-      await Order.findByIdAndDelete(id);
+      await Order.findByIdAndDelete(orderId);
       return {
-        status: 'OK',
         message: 'Xóa đơn hàng thành công!'
       };
-    }
-
-    return {
-      status: 'ERR',
-      message: 'Không thể xóa đơn hàng đã được giao!'
-    };
-    
+    }  
   } catch (e) {
-    throw new Error(e);
+    throw e;
   }
 };
 
@@ -334,8 +323,8 @@ const updateOrderStatus = async (id, data) => {
   session.startTransaction();
 
   try {
-    const order = await Order.findById(id);
-    const payment = await Payment.findOne({order: id});
+    const order = await Order.findById(id).session(session);
+    const payment = await Payment.findOne({order: id}).session(session);
 
     if(order === null) {
       return {
@@ -345,14 +334,34 @@ const updateOrderStatus = async (id, data) => {
 
     // Cập nhật trạng thái đơn hàng nếu có
     if (data.orderStatus) {
-      if(data.orderStatus === 'Delivered' && payment.paymentMethod === 'COD' && payment.status !== 'Completed') {
-        payment.status = 'Completed';
-        payment.paymentAt = new Date();
-        await payment.save({
-          session
-        });
+      if(order.status === 'Cancelled') {
+        return {
+          message: 'Đơn hàng đã bị hủy. Không thể cập nhật trạng thái!'
+        }
       }
-      
+
+      if(data.orderStatus === 'Delivered') {
+        order.deliveredAt = new Date();
+
+        if(payment.paymentMethod === 'COD' && payment.status !== 'Completed') {
+          payment.status = 'Completed';
+          payment.paidAt = new Date();
+          await payment.save({
+            session
+          });
+        }
+      }
+      else {
+        order.deliveredAt = null;
+      }
+
+      if(data.orderStatus === 'Shipping') {
+        order.deliveryAt = new Date();
+      }
+      else {
+        order.deliveryAt = null;
+      }
+
       if(data.orderStatus === 'Cancelled') {
         for(const orderItem of order.orderItems) {
           await Product.findOneAndUpdate(
@@ -370,17 +379,29 @@ const updateOrderStatus = async (id, data) => {
             }
           );
         }
-        
-        order.status = data.orderStatus;
-        await order.save({
-          session
-        });
+
+        order.cancelledAt = new Date();
       }
+      else {
+        order.cancelledAt = null;
+      }
+
+      order.status = data.orderStatus;
+      await order.save({
+        new: true,
+        session
+      });
     }
 
     // Cập nhật trạng thái thanh toán nếu có
     if (data.paymentStatus) {
       payment.status = data.paymentStatus;
+      if(data.paymentStatus === 'Completed') {
+        payment.paidAt = new Date();
+      } else {
+        payment.paidAt = null;
+      }
+      
       await payment.save({
         session
       });

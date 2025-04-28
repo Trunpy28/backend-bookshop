@@ -38,7 +38,7 @@ const authUserMiddleware = async (req, res, next) => {
     }
 
     const accessToken = req.headers.authorization.split(' ')[1];
-    const userId = req.params.id;
+    const userId = req.params.userId;
 
     try {
         const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN);
