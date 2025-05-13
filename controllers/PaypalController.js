@@ -35,13 +35,14 @@ const getPayPalAccessToken = async () => {
 */
 const createPayment = async (req, res) => {
   try {
-    const { amount } = req.body; // Lấy số tiền từ client (mặc định là VND)
+    const { orderId } = req.body;
     const accessToken = await getPayPalAccessToken();
-    
-    const amountCurrency = Number.parseInt(amount);
+
+    //Lấy chi tiết đơn hàng từ cơ sở dữ liệu
+    let order = await OrderServices.getDetailsOrder(orderId);
 
     // Chuyển đổi từ VND sang USD
-    const convertedAmount = await Convert(amountCurrency).from("VND").to("USD");
+    const convertedAmount = await Convert(order.totalPrice).from("VND").to("USD");
 
     const orderData = {
       intent: "CAPTURE",

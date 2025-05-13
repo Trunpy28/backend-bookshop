@@ -23,15 +23,18 @@ const productSchema = new mongoose.Schema({
     },
     countInStock: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0
     },
     originalPrice: {
         type: Number,
-        required: true
+        required: true,
+        min: 0
     },
     selled: {
         type: Number,
-        default: 0
+        default: 0,
+        min: 0
     },
     author: {
         type: String,
@@ -63,7 +66,7 @@ const productSchema = new mongoose.Schema({
         required: true
     },
     rating: {
-        avgRating: { type: Number, default: 0 },
+        avgRating: { type: Number, default: 0},
         totalReviews: { type: Number, default: 0 }
     }
 }, {

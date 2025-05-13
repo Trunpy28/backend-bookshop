@@ -56,8 +56,6 @@ const createOrder = async (orderData) => {
     }
 
     if (invalidProducts.length > 0) {
-      await session.abortTransaction();
-      session.endSession();
       throw new Error(`Các sản phẩm ${invalidProducts.join(", ")} không đủ số lượng trong kho!`);
     }
 
@@ -130,20 +128,14 @@ const cancelOrder = async (orderId, userId, cancelReason) => {
     let user = await User.findById(userId).session(session);
 
     if (order === null) {
-      await session.abortTransaction();
-      session.endSession();
       throw new Error("Đơn hàng không tồn tại!");
     }
 
     if (user.role !== 'admin' && user.id !== order.user.toString()) {
-      await session.abortTransaction();
-      session.endSession();
       throw new Error("Bạn không có quyền hủy đơn hàng này!");
     }
 
     if (order.status === 'Shipping' || order.status === 'Delivered') {
-      await session.abortTransaction();
-      session.endSession();
       throw new Error("Không thể hủy được đơn hàng!");
     }
 
@@ -395,11 +387,17 @@ const updateOrderStatus = async (id, data) => {
 
     // Cập nhật trạng thái thanh toán nếu có
     if (data.paymentStatus) {
-      payment.status = data.paymentStatus;
       if(data.paymentStatus === 'Completed') {
+        payment.status = data.paymentStatus;
         payment.paidAt = new Date();
       } else {
+        //Nếu thanh toán online và đã thanh toán thành công thì không được phép cập nhật lại
+        if(payment.paymentMethod !== 'COD' && payment.status == 'Completed') {
+          throw new Error('Không thể cập nhật trạng thái thanh toán!');
+        }
+
         payment.paidAt = null;
+        payment.status = data.paymentStatus;
       }
       
       await payment.save({

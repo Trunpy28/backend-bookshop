@@ -22,7 +22,6 @@ const authMiddleware = async (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        console.log(error);
         return res.status(401).json({
             message: "Không có quyền truy cập"
         })
@@ -53,7 +52,6 @@ const authUserMiddleware = async (req, res, next) => {
             })
         }
     } catch (error) {
-        console.log(error);
         return res.status(401).json({
             message: "Token xác thực không hợp lệ"
         })

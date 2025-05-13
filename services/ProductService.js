@@ -263,6 +263,7 @@ const getProductsForSelect = async () => {
     try {
       const products = await Product.find({}, {
         _id: 1,
+        productCode: 1,
         name: 1, 
         author: 1,
         publicationYear: 1,

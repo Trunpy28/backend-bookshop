@@ -69,11 +69,34 @@ const getBatchesPaginated = async (req, res) => {
   }
 };
 
+const addItemToBatch = async (req, res) => {
+  try {
+    const { batchId } = req.params;
+    const itemData = req.body;
+    const batch = await BatchService.addItemToBatch(batchId, itemData);
+    res.status(200).json(batch);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+const removeItemFromBatch = async (req, res) => {
+  try {
+    const { batchId, itemId } = req.params;
+    const batch = await BatchService.removeItemFromBatch(batchId, itemId);
+    res.status(200).json(batch);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export default {
   getAllBatches,
   getBatchById,
   createBatch,
   updateBatch,
   deleteBatch,
-  getBatchesPaginated
+  getBatchesPaginated,
+  addItemToBatch,
+  removeItemFromBatch
 }; 
