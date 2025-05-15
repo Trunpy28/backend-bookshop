@@ -250,6 +250,7 @@ const getPaginatedOrders = async (options) => {
     const pipeline = [
       { $match: query },
       {
+        //Join với bảng payments để lấy thông tin thanh toán
         $lookup: {
           from: 'payments',
           localField: '_id',
@@ -257,6 +258,7 @@ const getPaginatedOrders = async (options) => {
           as: 'payment'
         }
       },
+      // Phân tách mảng payment thành từng phần tử(Vì chỉ có 1 phần tử nên sẽ là 1 object chứ không phải mảng)
       { $unwind: { path: '$payment', preserveNullAndEmptyArrays: true } }
     ];
 
@@ -283,7 +285,7 @@ const getPaginatedOrders = async (options) => {
 
     // Đếm tổng số bản ghi trước khi phân trang
     const countPipeline = [...pipeline];
-    const countResult = await Order.aggregate([...countPipeline, { $count: 'total' }]);
+    const countResult = await Order.aggregate([...countPipeline, { $count: 'total' }]);   //{ "total": <số document> }
     const total = countResult.length > 0 ? countResult[0].total : 0;
 
     // Thêm sắp xếp và phân trang vào pipeline chính

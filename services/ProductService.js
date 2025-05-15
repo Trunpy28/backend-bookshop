@@ -243,11 +243,99 @@ const getDetailProduct = async (id) => {
     }
 };
 
-const getProductsPaginated = async (page, limit) => {
-    const skip = (page - 1) * limit;
-    const products = await Product.find().skip(skip).limit(limit);
-    const total = await Product.countDocuments();
-    return { products, total };
+const getProductsPaginated = async (options) => {
+    try {
+        let {
+            page = 1,
+            limit = 10,
+            productCode,
+            name,
+            genres,
+            author,
+            publisher
+        } = options;
+
+        page = Number(page);
+        limit = Number(limit);
+
+        const query = {};
+
+        if (productCode) {
+            query.productCode = { $regex: productCode, $options: 'i' };
+        }
+
+        if (name) {
+            query.name = { $regex: name, $options: 'i' };
+        }
+        
+        if (genres && genres.length > 0) {
+            const genreIds = genres.map(id => new mongoose.Types.ObjectId(id));
+            query.genre = { $in: genreIds };
+        }
+
+        if (author) {
+            query.author = { $regex: author, $options: 'i' };
+        }
+
+        if (publisher) {
+            query.publisher = { $regex: publisher, $options: 'i' };
+        }
+
+        const pipeline = [
+            // Lọc sản phẩm theo điều kiện đã xây dựng ở trên
+            { $match: query },
+
+            // Join với bảng genres để lấy thông tin chi tiết của thể loại
+            {
+                $lookup: {
+                    from: 'genres',           // Tên collection cần join
+                    localField: 'genre',      // Trường trong collection hiện tại (products)
+                    foreignField: '_id',      // Trường trong collection cần join (genres)
+                    as: 'genreData'           // Tên field chứa kết quả sau khi join
+                }
+            },
+
+            // Lấy phần tử đầu tiên từ mảng genreData
+            {
+                $addFields: {
+                    genre: { $arrayElemAt: ['$genreData', 0] }   // Thay thế trường genre bằng đối tượng đầy đủ
+                }
+            },
+
+            // Loại bỏ trường genreData không cần thiết
+            {
+                $project: {
+                    genreData: 0    // Loại bỏ trường genreData
+                }
+            }
+        ];
+
+        const countPipeline = [...pipeline];
+        // Thêm bước đếm tổng số bản ghi thỏa mãn điều kiện
+        const countResult = await Product.aggregate([...countPipeline, { $count: 'total' }]);     //{ "total": <số document> }
+        // Lấy giá trị đếm từ kết quả, nếu không có thì mặc định là 0
+        const total = countResult.length > 0 ? countResult[0].total : 0;
+
+        pipeline.push(
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+        );
+
+        // Thực hiện truy vấn aggregation
+        const products = await Product.aggregate(pipeline);
+
+        return {
+            data: products,
+            pagination: {
+                total,                        
+                page,                        
+                limit,                        
+                totalPages: Math.ceil(total / limit) || 0  
+            }
+        };
+    } catch (error) {
+        throw new Error(`Không thể lấy danh sách sản phẩm: ${error.message}`);
+    }
 };
 
 const getAllProductsName = async () => {

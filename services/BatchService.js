@@ -200,18 +200,62 @@ const deleteBatch = async (id) => {
     }
 };
 
-const getBatchesPaginated = async (page = 1, limit = 10) => {
+const getBatchesPaginated = async (page = 1, limit = 10, filters = {}) => {
     const skip = (page - 1) * limit;
     try {
-        const batches = await Batch.find()
+        const query = {};
+        
+        if (filters.supplierName) {
+            query.supplierName = { $regex: filters.supplierName, $options: 'i' };
+        }
+        
+        if (filters.batchId) {
+            query.$expr = {
+                $regexMatch: {
+                    input: { $toString: "$_id" },
+                    regex: filters.batchId,
+                    options: "i"
+                }
+            };
+        }
+        
+        // Lọc theo khoảng ngày nhập lô
+        if (filters.startDate && filters.endDate) {
+            // Kiểm tra endDate >= startDate
+            const startDate = new Date(filters.startDate);
+            const endDate = new Date(filters.endDate);
+            
+            if (endDate < startDate) {
+                throw new Error('Ngày kết thúc phải sau hoặc bằng ngày bắt đầu');
+            }
+            
+            // Đảm bảo endDate là cuối ngày (23:59:59)
+            endDate.setHours(23, 59, 59, 999);
+            
+            query.dateReceived = {
+                $gte: startDate,
+                $lte: endDate
+            };
+        } else if (filters.startDate) {
+            query.dateReceived = { $gte: new Date(filters.startDate) };
+        } else if (filters.endDate) {
+            const endDate = new Date(filters.endDate);
+            endDate.setHours(23, 59, 59, 999);
+            query.dateReceived = { $lte: endDate };
+        }
+        
+        // Đếm tổng số bản ghi dựa trên query lọc
+        const total = await Batch.countDocuments(query);
+        
+        const batches = await Batch.find(query)
             .populate('items.product')
             .sort({ dateReceived: -1 })
             .skip(skip)
             .limit(limit);
-        const total = await Batch.countDocuments();
+            
         return { batches, total };
     } catch (error) {
-        throw new Error('Không thể lấy danh sách lô hàng.');
+        throw new Error('Không thể lấy danh sách lô hàng: ' + error.message);
     }
 };
 

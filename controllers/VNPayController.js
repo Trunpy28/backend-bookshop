@@ -11,7 +11,7 @@ import {
 import { ProductCode, VnpLocale, dateFormat } from "vnpay";
 import mongoose from "mongoose";
 import OrderService from "../services/OrderService.js";
-
+import dayjs from "dayjs";
 // Khởi tạo VNPay
 const vnpay = new VNPay({
   tmnCode: process.env.VNPAY_TMN_CODE,
@@ -113,7 +113,7 @@ const handleCallback = async (req, res) => {
       // Cập nhật trạng thái thanh toán
       payment.status = "Completed";
       payment.transactionId = transactionNo;
-      payment.paidAt = parseDate(payDate, "gmt7");
+      payment.paidAt = dayjs(payDate).utc();
     }
 
     await payment.save({ session });
@@ -134,8 +134,6 @@ const handleIPN = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
-  console.log('abc');
-  
   try {
 		// Xác thực chữ ký
 		const verify = vnpay.verifyIpnCall(req.query);
@@ -166,7 +164,7 @@ const handleIPN = async (req, res) => {
       // Cập nhật trạng thái thanh toán
       payment.status = "Completed";
       payment.transactionId = transactionNo;
-      payment.paidAt = parseDate(payDate, "gmt7");
+      payment.paidAt = dayjs(payDate).utc();
     }
 
     await payment.save({ session });

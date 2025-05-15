@@ -95,9 +95,29 @@ const deleteManyProduct = async (req, res) => {
 
 const getProductsPaginated = async (req, res) => {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const { products, total } = await ProductService.getProductsPaginated(Number(page), Number(limit));
-      res.status(200).json({ products, total });
+      const { 
+        page = 1, 
+        limit = 10,
+        productCode,
+        name,
+        genres,
+        author,
+        publisher
+      } = req.query;
+      
+      // Chuyển đổi tham số truy vấn
+      const options = {
+        page: Number(page),
+        limit: Number(limit),
+        productCode,
+        name,
+        genres: genres ? genres.split(',') : undefined,
+        author,
+        publisher
+      };
+
+      const result = await ProductService.getProductsPaginated(options);
+      res.status(200).json(result);
     } catch (error) {
       res.status(500).json({ message: error.message });
     }

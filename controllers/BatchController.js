@@ -61,8 +61,28 @@ const deleteBatch = async (req, res) => {
 
 const getBatchesPaginated = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-    const { batches, total } = await BatchService.getBatchesPaginated(Number(page), Number(limit));
+    const { 
+      page = 1, 
+      limit = 10, 
+      supplierName,
+      batchId,
+      startDate,
+      endDate
+    } = req.query;
+    
+    const filters = {
+      supplierName,
+      batchId,
+      startDate,
+      endDate
+    };
+    
+    const { batches, total } = await BatchService.getBatchesPaginated(
+      Number(page), 
+      Number(limit),
+      filters
+    );
+    
     res.status(200).json({ batches, total });
   } catch (error) {
     res.status(500).json({ message: error.message });
