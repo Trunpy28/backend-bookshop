@@ -102,7 +102,9 @@ const getProductsPaginated = async (req, res) => {
         name,
         genres,
         author,
-        publisher
+        publisher,
+        sort,
+        price
       } = req.query;
       
       // Chuyển đổi tham số truy vấn
@@ -113,7 +115,9 @@ const getProductsPaginated = async (req, res) => {
         name,
         genres: genres ? genres.split(',') : undefined,
         author,
-        publisher
+        publisher,
+        sort: sort,
+        price: price
       };
 
       const result = await ProductService.getProductsPaginated(options);

@@ -252,7 +252,9 @@ const getProductsPaginated = async (options) => {
             name,
             genres,
             author,
-            publisher
+            publisher,
+            sort,
+            price
         } = options;
 
         page = Number(page);
@@ -279,6 +281,19 @@ const getProductsPaginated = async (options) => {
 
         if (publisher) {
             query.publisher = { $regex: publisher, $options: 'i' };
+        }
+        
+        // Xử lý lọc theo khoảng giá (đối tượng price có thuộc tính min và max)
+        if (price) {
+            const { min, max } = price;
+            // Xây dựng điều kiện lọc giá
+            if (min !== null && min !== undefined && max !== null && max !== undefined) {
+                query.originalPrice = { $gte: Number(min), $lte: Number(max) };
+            } else if (min !== null && min !== undefined) {
+                query.originalPrice = { $gte: Number(min) };
+            } else if (max !== null && max !== undefined) {
+                query.originalPrice = { $lte: Number(max) };
+            }
         }
 
         const pipeline = [
@@ -309,6 +324,28 @@ const getProductsPaginated = async (options) => {
                 }
             }
         ];
+
+        // Xử lý sắp xếp - chỉ sắp xếp khi có sortBy
+        if (sort && sort.sortBy) {
+            const order = sort.order === 'asc' ? 1 : -1;
+            switch (sort.sortBy) {
+                case 'price':
+                    pipeline.push({ $sort: { originalPrice: order } });
+                    break;
+                case 'name':
+                    pipeline.push({ $sort: { name: order } });
+                    break;
+                case 'publicationYear':
+                    pipeline.push({ $sort: { publicationYear: order } });
+                    break;
+                case 'rating':
+                    pipeline.push({ $sort: { "rating.avgRating": order } });
+                    break;
+                default:
+                    // Không thực hiện sắp xếp nếu sortBy không hợp lệ
+                    break;
+            }
+        }
 
         const countPipeline = [...pipeline];
         // Thêm bước đếm tổng số bản ghi thỏa mãn điều kiện
