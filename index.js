@@ -5,6 +5,7 @@ import routes from './routes/index.js';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import passport from './config/passport.js';
+import { checkConnection, createProductIndex } from './config/elasticsearchConfig.js';
 
 dotenv.config();
 
@@ -36,14 +37,37 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 routes(app);
 
+// Kết nối đến MongoDB
 mongoose.connect(process.env.MONGODB_URI)
     .then(()=>{
-        console.log('Connected to Db Successfully');
+        console.log('Connected to MongoDB Successfully');
     })
     .catch((err)=>{
-        console.log(err);
+        console.log('MongoDB connection error:', err);
     })
 
-app.listen(port, ()=>{
-    console.log('Server is running in port: ' + port);
-})
+// Khởi tạo Elasticsearch
+const initElasticsearch = async () => {
+  try {
+    // Kiểm tra kết nối Elasticsearch
+    const connected = await checkConnection();
+    
+    if (connected) {
+      // Tạo index nếu chưa tồn tại
+      await createProductIndex();
+      console.log('Elasticsearch đã sẵn sàng');
+    } else {
+      console.log('Không thể kết nối Elasticsearch - chức năng tìm kiếm có thể không hoạt động');
+    }
+  } catch (error) {
+    console.error('Lỗi khởi tạo Elasticsearch:', error);
+  }
+};
+
+// Khởi động server
+app.listen(port, async () => {
+  // Khởi tạo Elasticsearch
+  await initElasticsearch();
+  
+  console.log('Server is running in port: ' + port);
+});

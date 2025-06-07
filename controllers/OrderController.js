@@ -58,7 +58,8 @@ const createOrder = async (req, res) => {
             address,
             paymentMethod,
             itemsPrice,
-            discountPrice
+            discountPrice,
+            voucherCode: voucherCode
         };
 
         const newOrder = await OrderServices.createOrder(orderData);

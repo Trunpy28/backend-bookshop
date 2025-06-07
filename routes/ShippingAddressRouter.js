@@ -1,6 +1,6 @@
 import express from 'express';
 import ShippingAddressController from '../controllers/ShippingAddressController.js';
-import { authMiddleware } from '../middleware/authMiddleware.js';
+import { authMiddleware } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
 

@@ -1,6 +1,18 @@
 import Review from '../models/ReviewModel.js';
 import Product from '../models/ProductModel.js';
+import Order from '../models/OrderModel.js';
 import mongoose from 'mongoose';
+
+const checkUserHasOrder = async (userId, productId) => {
+    const order = await Order.findOne({
+        user: userId,
+        orderItems: { $elemMatch: { product: productId } },
+        status: 'Delivered',
+        deliveredAt: { $exists: true, $ne: null }
+    });
+
+    return order !== null;
+};
 
 const getReviewById = async (id) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -92,7 +104,13 @@ const createReview = async (reviewData) => {
         if (existingReview) {
             throw new Error('Bạn đã đánh giá sản phẩm này rồi.');
         }
-        
+
+        const userHasOrder = await checkUserHasOrder(reviewData.user, reviewData.product);
+
+        if (!userHasOrder) {
+            throw new Error('Bạn không có quyền đánh giá sản phẩm này. Chỉ những sản phẩm bạn đã nhận được hàng mới có thể đánh giá.');
+        }
+
         const review = new Review(reviewData);
         const savedReview = await review.save();
         

@@ -1,25 +1,15 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import handlebars from 'handlebars';
 import { fileURLToPath } from 'url';
+import transporter from '../config/emailConfig.js';
+import dotenv from 'dotenv';
 
 // Tạo __dirname trong ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
-
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Use `true` for port 465, `false` for all other ports
-  auth: {
-    user: process.env.MAIL_ACCOUNT,
-    pass: process.env.MAIL_PASSWORD,
-  },
-});
 
 const sendEmailCreateOrder = async (email, order) => {
   const {

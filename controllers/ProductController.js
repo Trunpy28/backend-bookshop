@@ -1,5 +1,6 @@
 import ProductService from '../services/ProductService.js';
 import CloudinaryService from '../services/CloudinaryService.js';
+import * as elasticsearchService from '../services/ElasticSearchService.js';
 
 const createProduct = async (req, res) => {
     try {
@@ -127,15 +128,6 @@ const getProductsPaginated = async (req, res) => {
     }
 };
 
-const getAllProductsName = async (req, res) => {
-  try {
-    const products = await ProductService.getAllProductsName();
-    res.json(products);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
 const getProductsForSelect = async (req, res) => {
   try {
     const products = await ProductService.getProductsForSelect();
@@ -161,6 +153,76 @@ const getProductsByGenre = async (req, res) => {
     }
 };
 
+//Tìm kiếm sản phẩm với Elasticsearch
+export const searchProducts = async (req, res) => {
+    try {
+        const { q, page = 1, limit = 10, sort = 'relevance' } = req.query;
+        
+        if (!q) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Vui lòng nhập từ khóa tìm kiếm' 
+            });
+        }
+
+        const options = {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            sort
+        };
+
+        const result = await elasticsearchService.searchProducts(q, options);
+        
+        return res.json({
+            success: true,
+            ...result
+        });
+    } catch (error) {
+        return res.status(500).json({
+            success: false,
+            message: 'Đã xảy ra lỗi khi tìm kiếm sản phẩm',
+            error: error.message
+        });
+    }
+};
+
+// Lấy sản phẩm tương tự
+export const getSimilarProducts = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { limit = 5 } = req.query;
+    
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: 'Thiếu ID sản phẩm'
+      });
+    }
+
+    const result = await elasticsearchService.getSimilarProducts(id, {
+      limit: parseInt(limit)
+    });
+    
+    if (!result.success) {
+      return res.status(404).json({
+        success: false,
+        message: result.error || 'Không thể tìm sản phẩm tương tự'
+      });
+    }
+
+    return res.json({
+      success: true,
+      products: result.products
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Đã xảy ra lỗi khi tìm sản phẩm tương tự',
+      error: error.message
+    });
+  }
+};
+
 export default {
     createProduct,
     updateProduct,
@@ -169,7 +231,8 @@ export default {
     getAllProduct,
     deleteManyProduct,
     getProductsPaginated,
-    getAllProductsName,
     getProductsForSelect,
-    getProductsByGenre
+    getProductsByGenre,
+    searchProducts,
+    getSimilarProducts
 };

@@ -33,7 +33,7 @@ const createOrder = async (orderData) => {
   session.startTransaction();
 
   try {
-    const { user, orderItems, fullName, phone, address, paymentMethod, itemsPrice, discountPrice } = orderData;
+    const { user, orderItems, fullName, phone, address, paymentMethod, itemsPrice, discountPrice, voucherCode } = orderData;
 
     // Tính phí vận chuyển dựa trên tổng giá trị đơn hàng
     let shippingPrice = 0;
@@ -83,6 +83,7 @@ const createOrder = async (orderData) => {
       shippingPrice,
       discountPrice,
       totalPrice,
+      voucherCode,
       status: 'Pending'
     };
 

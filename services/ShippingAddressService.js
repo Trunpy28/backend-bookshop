@@ -23,10 +23,10 @@ const addAddress = async (userId, addressData) => {
         let shippingAddress = await ShippingAddress.findOne({ user: userId });
 
         // Đặt isDefault = true nếu là địa chỉ đầu tiên
-        const isFirstAddress = !shippingAddress || shippingAddress.addresses.length === 0;
+        const isFirstAddress = !shippingAddress || shippingAddress?.addresses?.length === 0;
         if (isFirstAddress) {
             addressData.isDefault = true;
-        } else if (addressData.isDefault) {
+        } else if (shippingAddress && addressData.isDefault) {
             // Nếu địa chỉ mới là mặc định, cập nhật các địa chỉ khác thành không mặc định
             shippingAddress.addresses.forEach(address => {
                 address.isDefault = false;

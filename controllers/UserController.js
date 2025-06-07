@@ -318,6 +318,40 @@ const changePassword = async (req, res) => {
     }
 };
 
+const getUsersPaginated = async (req, res) => {
+  try {
+    const { 
+      page = 1, 
+      limit = 10, 
+      name,
+      email,
+      phone,
+      role
+    } = req.query;
+    
+    const options = {
+      page,
+      limit,
+      name,
+      email,
+      phone,
+      role
+    };
+    
+    const data = await UserServices.getUsersPaginated(options);
+    return res.status(200).json({
+      status: "OK",
+      message: "Lấy danh sách người dùng thành công!",
+      data: data
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: 'ERR',
+      message: error.message
+    });
+  }
+}
+
 export default {
     createUser,
     loginUser,
@@ -330,5 +364,6 @@ export default {
     forgotPassword,
     verifyResetPasswordToken,
     resetPassword,
-    changePassword
+    changePassword,
+    getUsersPaginated
 }

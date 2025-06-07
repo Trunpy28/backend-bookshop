@@ -1,24 +1,17 @@
 import Payment from "../models/PaymentModel.js";
 import {
-  InpOrderAlreadyConfirmed,
   IpnFailChecksum,
   IpnOrderNotFound,
   IpnSuccess,
   IpnUnknownError,
-  parseDate,
-  VNPay,
+  ProductCode, 
+  VnpLocale, 
+  dateFormat
 } from "vnpay";
-import { ProductCode, VnpLocale, dateFormat } from "vnpay";
 import mongoose from "mongoose";
 import OrderService from "../services/OrderService.js";
 import dayjs from "dayjs";
-// Khởi tạo VNPay
-const vnpay = new VNPay({
-  tmnCode: process.env.VNPAY_TMN_CODE,
-  secureSecret: process.env.VNPAY_SECURE_SECRET,
-  vnpayHost: process.env.VNPAY_HOST || "https://sandbox.vnpayment.vn",
-  testMode: process.env.NODE_ENV !== "production",
-});
+import vnpay from "../config/vnpayConfig.js";
 
 // Tạo URL thanh toán VNPay
 const createPayment = async (req, res) => {

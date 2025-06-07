@@ -1,6 +1,6 @@
 import Voucher from '../models/VoucherModel.js';
 import mongoose from 'mongoose';
-import moment from 'moment';
+import dayjs from 'dayjs';
 
 const createVoucher = async (data) => {
   try {
@@ -46,7 +46,7 @@ const createVoucher = async (data) => {
     }
 
     // Kiểm tra thời gian hợp lệ
-    if (moment(data.startDate).isAfter(moment(data.endDate))) {
+    if (dayjs(data.startDate).isAfter(dayjs(data.endDate))) {
       throw new Error('Thời gian bắt đầu phải trước thời gian kết thúc');
     }
 
@@ -186,15 +186,15 @@ const updateVoucher = async (id, data) => {
 
     // Kiểm tra thời gian hợp lệ nếu có cập nhật
     if (data.startDate && data.endDate) {
-      if (moment(data.startDate).isAfter(moment(data.endDate))) {
+      if (dayjs(data.startDate).isAfter(dayjs(data.endDate))) {
         throw new Error('Thời gian bắt đầu phải trước thời gian kết thúc');
       }
     } else if (data.startDate && !data.endDate) {
-      if (moment(data.startDate).isAfter(moment(existingVoucher.endDate))) {
+      if (dayjs(data.startDate).isAfter(dayjs(existingVoucher.endDate))) {
         throw new Error('Thời gian bắt đầu phải trước thời gian kết thúc');
       }
     } else if (!data.startDate && data.endDate) {
-      if (moment(existingVoucher.startDate).isAfter(moment(data.endDate))) {
+      if (dayjs(existingVoucher.startDate).isAfter(dayjs(data.endDate))) {
         throw new Error('Thời gian bắt đầu phải trước thời gian kết thúc');
       }
     }

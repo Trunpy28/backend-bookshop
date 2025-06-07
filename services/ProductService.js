@@ -1,5 +1,6 @@
 import Product from '../models/ProductModel.js';
 import mongoose from 'mongoose';
+import * as elasticsearchService from './ElasticSearchService.js';
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -53,6 +54,16 @@ const createProduct = async (newProduct) => {
         const createdProduct = await Product.create(newProduct);
 
         if (createdProduct) {
+            // Đồng bộ với Elasticsearch
+            try {
+                const populatedProduct = await createdProduct.populate('genre', 'name');
+                await elasticsearchService.indexProduct(populatedProduct);
+                console.log('Đã đồng bộ sản phẩm mới với Elasticsearch');
+            } catch (esError) {
+                console.error('Lỗi khi đồng bộ sản phẩm mới với Elasticsearch:', esError);
+                // Không throw lỗi để không ảnh hưởng đến luồng tạo sản phẩm
+            }
+            
             return {
                 status: 'OK',
                 message: 'Thêm sản phẩm thành công!',
@@ -122,6 +133,16 @@ const updateProduct = async (id, data) => {
             { $set: data },
             { new: true }
         );
+        
+        // Đồng bộ với Elasticsearch
+        try {
+            const populatedProduct = await updatedProduct.populate('genre', 'name');
+            await elasticsearchService.indexProduct(populatedProduct);
+            console.log('Đã đồng bộ sản phẩm cập nhật với Elasticsearch');
+        } catch (esError) {
+            console.error('Lỗi khi đồng bộ sản phẩm cập nhật với Elasticsearch:', esError);
+            // Không throw lỗi để không ảnh hưởng đến luồng cập nhật sản phẩm
+        }
 
         return {
             status: 'OK',
@@ -145,6 +166,15 @@ const deleteProduct = async (id) => {
         const checkProduct = await Product.findById(id);
         if (checkProduct === null) {
             throw new Error('Sản phẩm không tồn tại!');
+        }
+        
+        // Xóa khỏi Elasticsearch trước
+        try {
+            await elasticsearchService.deleteProduct(id);
+            console.log('Đã xóa sản phẩm khỏi Elasticsearch');
+        } catch (esError) {
+            console.error('Lỗi khi xóa sản phẩm khỏi Elasticsearch:', esError);
+            // Không throw lỗi để không ảnh hưởng đến luồng xóa sản phẩm
         }
 
         await Product.findByIdAndDelete(id, { session });
@@ -375,15 +405,6 @@ const getProductsPaginated = async (options) => {
     }
 };
 
-const getAllProductsName = async () => {
-    try {
-        const products = await Product.find({}, 'name _id');
-        return products;
-    } catch (error) {
-        throw new Error('Không thể lấy danh sách tên sản phẩm: ' + error.message);
-    }
-};
-
 const getProductsForSelect = async () => {
     try {
       const products = await Product.find({}, {
@@ -436,7 +457,6 @@ export default {
     getAllProduct,
     getDetailProduct,
     getProductsPaginated,
-    getAllProductsName,
     getProductsForSelect,
-    getProductsByGenre
+    getProductsByGenre,
 };

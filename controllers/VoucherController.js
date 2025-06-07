@@ -1,8 +1,19 @@
 import VoucherService from '../services/VoucherService.js';
+import { uploadFile } from '../services/CloudinaryService.js';
 
 const createVoucher = async (req, res) => {
   try {
-    const newVoucher = await VoucherService.createVoucher(req.body);
+    let imageUrl = '';
+    if (req.file) {
+      imageUrl = await uploadFile(req.file);
+    }
+    
+    const voucherData = {
+      ...req.body,
+      image: imageUrl
+    };
+    
+    const newVoucher = await VoucherService.createVoucher(voucherData);
     return res.status(200).json({
       data: newVoucher
     });
@@ -74,7 +85,14 @@ const getVoucherByCode = async (req, res) => {
 const updateVoucher = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedVoucher = await VoucherService.updateVoucher(id, req.body);
+    let updateData = { ...req.body };
+
+    if (req.file) {
+      const imageUrl = await uploadFile(req.file);
+      updateData.image = imageUrl;
+    }
+    
+    const updatedVoucher = await VoucherService.updateVoucher(id, updateData);
     
     return res.status(200).json({
       data: updatedVoucher

@@ -254,6 +254,69 @@ const findUserById = async (userId) => {
   return await User.findById(userId);
 };
 
+const getUsersPaginated = async (options) => {
+  try {
+    let { 
+      page = 1, 
+      limit = 10, 
+      name,
+      email,
+      phone,
+      role
+    } = options;
+    
+    page = Number.parseInt(page);
+    limit = Number.parseInt(limit);
+
+    const query = {};
+    
+    // Tìm theo tên người dùng
+    if (name) {
+      query.name = { $regex: name, $options: 'i' };
+    }
+
+    // Tìm theo email
+    if (email) {
+      query.email = { $regex: email, $options: 'i' };
+    }
+
+    // Tìm theo số điện thoại
+    if (phone) {
+      query.phone = { $regex: phone, $options: 'i' };
+    }
+
+    // Lọc theo vai trò
+    if (role !== undefined) {
+      if (role === 'admin') {
+        query.isAdmin = true;
+      } else if (role === 'customer') {
+        query.isAdmin = false;
+      }
+    }
+
+    // Đếm tổng số bản ghi
+    const total = await User.countDocuments(query);
+    
+    // Thực hiện truy vấn dữ liệu có phân trang và loại bỏ trường avatar
+    const users = await User.find(query, { avatar: 0 })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    return {
+      data: users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit) || 0
+      }
+    };
+  } catch (error) {
+    throw new Error(`Không thể lấy danh sách người dùng: ${error.message}`);
+  }
+};
+
 export default {
   createUser,
   loginUser,
@@ -268,4 +331,5 @@ export default {
   findUserById,
   createUserOAuth,
   changePassword,
+  getUsersPaginated
 };

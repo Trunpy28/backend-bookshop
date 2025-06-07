@@ -1,21 +1,24 @@
 import express from 'express';
+import multer from 'multer';
 import VoucherController from '../controllers/VoucherController.js';
-import { adminAuthMiddleware, authMiddleware } from '../middleware/authMiddleware.js';
+import { adminAuthMiddleware, authMiddleware } from '../middleware/AuthMiddleware.js';
 
 const router = express.Router();
 
-// Route cho người dùng không cần đăng nhập
+// Cấu hình multer để lưu trữ file trong bộ nhớ
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+
+//client
 router.get('/active', VoucherController.getActiveVouchers);
-
-// Route cho người dùng đã đăng nhập
 router.post('/apply', authMiddleware, VoucherController.applyVoucher);
-
-// Route cho admin
-router.post('/create', authMiddleware, adminAuthMiddleware, VoucherController.createVoucher);
-router.get('/getAll', authMiddleware, adminAuthMiddleware, VoucherController.getAllVouchers);
-router.get('/get/:id', VoucherController.getVoucherById);
 router.get('/getByCode/:code', VoucherController.getVoucherByCode);
-router.put('/update/:id', authMiddleware, adminAuthMiddleware, VoucherController.updateVoucher);
+router.get('/get/:id', VoucherController.getVoucherById);
+
+//admin
+router.post('/create', authMiddleware, adminAuthMiddleware, upload.single('image'), VoucherController.createVoucher);
+router.get('/getAll', authMiddleware, adminAuthMiddleware, VoucherController.getAllVouchers);
+router.put('/update/:id', authMiddleware, adminAuthMiddleware, upload.single('image'), VoucherController.updateVoucher);
 router.delete('/delete/:id', authMiddleware, adminAuthMiddleware, VoucherController.deleteVoucher);
 
 export default router; 
