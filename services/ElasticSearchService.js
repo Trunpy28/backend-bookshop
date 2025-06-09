@@ -125,53 +125,6 @@ export const searchProducts = async (query, options = {}) => {
 };
 
 /**
- * Đồng bộ lại toàn bộ sản phẩm từ MongoDB vào Elasticsearch
- */
-export const syncAllProducts = async (products) => {
-  try {
-    console.log(`Bắt đầu đồng bộ ${products.length} sản phẩm vào Elasticsearch`);
-    
-    // Bulk index các sản phẩm
-    if (products.length > 0) {
-      const body = products.flatMap(product => {
-        const genreName = product.genre?.name || '';
-        
-        return [
-          { index: { _index: 'products', _id: product._id.toString() } },
-          {
-            id: product._id.toString(),
-            name: product.name,
-            author: product.author,
-            publisher: product.publisher,
-            description: product.description,
-            genre: genreName,
-            publicationYear: product.publicationYear,
-            price: product.originalPrice,
-            rating: product.rating?.avgRating || 0,
-            images: product.images || []
-          }
-        ];
-      });
-
-      const response = await elasticClient.bulk({ refresh: true, body });
-      
-      if (response.errors) {
-        console.error('Lỗi khi bulk index:', response.items);
-        return { success: false, error: 'Có lỗi khi đồng bộ dữ liệu' };
-      }
-      
-      console.log(`Đã đồng bộ ${products.length} sản phẩm vào Elasticsearch`);
-      return { success: true, count: products.length };
-    }
-    
-    return { success: true, count: 0 };
-  } catch (error) {
-    console.error('Lỗi khi đồng bộ sản phẩm:', error);
-    return { success: false, error };
-  }
-};
-
-/**
  * Tìm các sản phẩm tương tự dựa trên tiêu đề, tác giả, thể loại
  * và sắp xếp theo rating nếu cùng độ tương tự
  */

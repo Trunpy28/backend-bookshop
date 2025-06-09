@@ -10,6 +10,7 @@ import VoucherRouter from './VoucherRouter.js'
 import CartRouter from './CartRouter.js'
 import ShippingAddressRouter from './ShippingAddressRouter.js'
 import VNPayRouter from './VNPayRouter.js'
+import StatisticsRouter from './StatisticsRouter.js'
 
 const routes = (app) => {
     app.use('/api/user',UserRouter);
@@ -24,6 +25,7 @@ const routes = (app) => {
     app.use('/api/cart', CartRouter);
     app.use('/api/shipping-address', ShippingAddressRouter);
     app.use('/api/vnpay', VNPayRouter);
+    app.use('/api/statistics', StatisticsRouter);
 }
 
 export default routes;

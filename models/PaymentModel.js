@@ -33,5 +33,9 @@ const paymentSchema = new mongoose.Schema(
     }
 );
 
+
+// Chỉ mục tổng hợp cho status và paidAt để tối ưu các truy vấn thống kê doanh thu
+paymentSchema.index({ status: 1, paidAt: 1 });
+
 const Payment = mongoose.model('Payment', paymentSchema);
 export default Payment; 

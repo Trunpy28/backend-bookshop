@@ -59,8 +59,7 @@ const loginUser = async (req,res) => {
         
         // Kiểm tra có email hay không
         if(!email) {
-            return res.status(200).json({
-                status: 'ERR',
+            return res.status(400).json({
                 message: 'Email là trường bắt buộc'
             })
         }
@@ -69,22 +68,20 @@ const loginUser = async (req,res) => {
         const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
         const ischeckEmail = regex.test(email);
         if(!ischeckEmail){
-            return res.status(200).json({
-                status: 'ERR',
+            return res.status(400).json({
                 message: 'Email không hợp lệ'
             })
         }
         
         // Kiểm tra có password hay không
         if(!password) {
-            return res.status(200).json({
-                status: 'ERR',
+            return res.status(400).json({
                 message: 'Mật khẩu là trường bắt buộc'
             })
         }
 
         const respond = await UserServices.loginUser(req.body);
-        const {refresh_token, ...newRespond} = respond;
+        const {refresh_token} = respond;
 
         res.cookie('refresh_token', refresh_token,{
             httpOnly: true,

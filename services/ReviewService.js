@@ -7,8 +7,7 @@ const checkUserHasOrder = async (userId, productId) => {
     const order = await Order.findOne({
         user: userId,
         orderItems: { $elemMatch: { product: productId } },
-        status: 'Delivered',
-        deliveredAt: { $exists: true, $ne: null }
+        status: 'Delivered'
     });
 
     return order !== null;

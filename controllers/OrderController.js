@@ -102,7 +102,7 @@ const getMyOrders = async (req, res) => {
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
-            message: e
+            message: e.message
         })
     }
 }
@@ -129,7 +129,7 @@ const getDetailsOrder = async (req, res) => {
         });
     } catch (e) {
         return res.status(404).json({
-            message: e
+            message: e.message
         })
     }
 }
@@ -173,7 +173,7 @@ const deleteOrder = async (req, res) => {
         return res.status(200).json(respond);
     } catch (e) {
         return res.status(404).json({
-            message: e
+            message: e.message
         })
     }
 }
@@ -218,8 +218,8 @@ const updateOrderStatus = async (req, res) => {
     const { orderStatus, paymentStatus } = req.body;
 
     if (!id) {
-      return res.status(400).json({
-        status: 'ERR',
+      return res.status(404).json({
+        status: 'ERR',  
         message: 'Thiếu ID đơn hàng'
       });
     }
@@ -228,8 +228,8 @@ const updateOrderStatus = async (req, res) => {
     
     return res.status(200).json(response);
   } catch (e) {
-    return res.status(404).json({
-      message: e
+    return res.status(400).json({
+      message: e.message
     });
   }
 };

@@ -396,7 +396,7 @@ const updateOrderStatus = async (id, data) => {
       } else {
         //Nếu thanh toán online và đã thanh toán thành công thì không được phép cập nhật lại
         if(payment.paymentMethod !== 'COD' && payment.status == 'Completed') {
-          throw new Error('Không thể cập nhật trạng thái thanh toán!');
+          throw new Error('Đơn hàng đã thanh toán trực tuyến. Không thể cập nhật trạng thái thanh toán!');
         }
 
         payment.paidAt = null;
