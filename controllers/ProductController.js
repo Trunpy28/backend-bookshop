@@ -74,26 +74,6 @@ const deleteProduct = async (req, res) => {
     }
 };
 
-const getAllProduct = async (req, res) => {
-    try {
-        const { limit, page, sort, filter } = req.query;
-        const products = await ProductService.getAllProduct(limit, page, sort, filter);
-        res.status(200).json(products);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
-const deleteManyProduct = async (req, res) => {
-    try {
-        const ids = req.body.ids;
-        const result = await ProductService.deleteManyProduct(ids);
-        res.status(200).json(result);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-};
-
 const getProductsPaginated = async (req, res) => {
     try {
       const { 
@@ -228,8 +208,6 @@ export default {
     updateProduct,
     getDetailProduct,
     deleteProduct,
-    getAllProduct,
-    deleteManyProduct,
     getProductsPaginated,
     getProductsForSelect,
     getProductsByGenre,

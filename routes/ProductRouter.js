@@ -12,7 +12,6 @@ router.post('/create', authMiddleware, adminAuthMiddleware, upload.array('images
 router.put('/update/:id', authMiddleware, adminAuthMiddleware, upload.array('images'), ProductController.updateProduct);
 router.get('/get-details/:id', ProductController.getDetailProduct);
 router.delete('/delete/:id', authMiddleware, adminAuthMiddleware, ProductController.deleteProduct);
-router.get('/get-all', ProductController.getAllProduct);
 router.get('/get-products-paginated', ProductController.getProductsPaginated);
 router.get('/products-for-select', ProductController.getProductsForSelect);
 router.get('/by-genre/:genreId', ProductController.getProductsByGenre);

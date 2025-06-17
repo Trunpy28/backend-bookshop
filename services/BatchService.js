@@ -2,9 +2,30 @@ import Batch from '../models/BatchModel.js';
 import Product from '../models/ProductModel.js';
 import mongoose from 'mongoose';
 
+// Hàm tính tổng giá trị lô hàng
+const calculateBatchTotalPrice = (batch) => {
+    if (!batch || !batch.items || batch.items.length === 0) {
+        return 0;
+    }
+    
+    return batch.items.reduce((total, item) => {
+        return total + (item.importPrice * item.quantity);
+    }, 0);
+};
+
 const getAllBatches = async () => {
     try {
-        return await Batch.find().populate('items.product').sort({ dateReceived: -1 });
+        const batches = await Batch.find().populate('items.product').sort({ dateReceived: -1 });
+        
+        const batchesWithTotalPrice = batches.map(batch => {
+            const batchObj = batch.toObject();
+            return {
+                ...batchObj,
+                totalPrice: calculateBatchTotalPrice(batchObj)
+            };
+        });
+        
+        return batchesWithTotalPrice;
     } catch (error) {
         throw new Error('Không thể lấy danh sách lô hàng.');
     }
@@ -35,19 +56,17 @@ const createBatch = async (batchData) => {
             throw new Error('Ngày nhận hàng là bắt buộc.');
         }
 
-        // Kiểm tra % chiết khấu
-        if (batchData.discountPercentage !== undefined) {
-            if (isNaN(batchData.discountPercentage) || batchData.discountPercentage < 0 || batchData.discountPercentage > 100) {
-                throw new Error('Phần trăm chiết khấu phải là số từ 0 đến 100.');
-            }
-        }
-
         // Nếu có items, kiểm tra và cập nhật số lượng tồn kho
         if (batchData.items && batchData.items.length > 0) {
             for (const item of batchData.items) {
                 const product = await Product.findById(item.product);
                 if (!product) {
                     throw new Error(`Không tìm thấy sản phẩm với ID: ${item.product}`);
+                }
+                
+                // Kiểm tra giá nhập
+                if (item.importPrice === undefined || item.importPrice < 0) {
+                    throw new Error(`Giá nhập không hợp lệ cho sản phẩm: ${product.name}`);
                 }
                 
                 // Cập nhật số lượng tồn kho
@@ -72,13 +91,6 @@ const createBatch = async (batchData) => {
 
 const updateBatch = async (id, batchData) => {
     try {
-        // Kiểm tra % chiết khấu
-        if (batchData.discountPercentage !== undefined) {
-            if (isNaN(batchData.discountPercentage) || batchData.discountPercentage < 0 || batchData.discountPercentage > 100) {
-                throw new Error('Phần trăm chiết khấu phải là số từ 0 đến 100.');
-            }
-        }
-
         return await Batch.findByIdAndUpdate(id, batchData, { new: true });
     } catch (error) {
         throw new Error(error.message || 'Không thể cập nhật lô hàng.');
@@ -102,6 +114,11 @@ const addItemToBatch = async (batchId, itemData) => {
         const product = await Product.findById(itemData.product);
         if (!product) {
             throw new Error('Không tìm thấy sản phẩm');
+        }
+        
+        // Kiểm tra giá nhập
+        if (itemData.importPrice === undefined || itemData.importPrice < 0) {
+            throw new Error(`Giá nhập không hợp lệ cho sản phẩm: ${product.name}`);
         }
 
         // Cập nhật số lượng tồn kho
@@ -252,8 +269,19 @@ const getBatchesPaginated = async (page = 1, limit = 10, filters = {}) => {
             .sort({ dateReceived: -1 })
             .skip(skip)
             .limit(limit);
+        
+        const batchesWithTotalPrice = batches.map(batch => {
+            const batchObj = batch.toObject();
+            return {
+                ...batchObj,
+                totalPrice: calculateBatchTotalPrice(batchObj)
+            };
+        });
             
-        return { batches, total };
+        return { 
+            batches: batchesWithTotalPrice, 
+            total 
+        };
     } catch (error) {
         throw new Error('Không thể lấy danh sách lô hàng: ' + error.message);
     }

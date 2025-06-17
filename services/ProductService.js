@@ -193,65 +193,6 @@ const deleteProduct = async (id) => {
     }
 };
 
-const getAllProduct = async (limit = Number.MAX_SAFE_INTEGER, page = 1, sort, filter) => {
-    try {
-        const totalProduct = await Product.count();
-        
-        // Xây dựng query
-        let query = {};
-        
-        // Xử lý filter
-        if (filter) {
-            const objFilter = JSON.parse(filter);
-            if (objFilter.genre) {
-                query.genre = objFilter.genre;
-            }
-            
-            if (objFilter.price) {
-                const minPrice = objFilter.price[0];
-                const maxPrice = objFilter.price[1];
-                query.originalPrice = { $gte: minPrice, $lte: maxPrice };
-            }
-        }
-        
-        // Lấy sản phẩm với phân trang và sắp xếp
-        let queryCommand = Product.find(query)
-            .populate('genre', 'name')
-            .skip((page - 1) * limit)
-            .limit(limit);
-        
-        // Xử lý sort
-        if (sort) {
-            const objSort = JSON.parse(sort);
-            const sortBy = objSort.sortBy;
-            const order = objSort.order === 'asc' ? 1 : -1;
-            
-            if (sortBy) {
-                if (sortBy === 'price') {
-                    queryCommand = queryCommand.sort({ originalPrice: order });
-                } else if (sortBy === 'createdAt') {
-                    queryCommand = queryCommand.sort({ createdAt: order });
-                } else if (sortBy === 'rating') {
-                    queryCommand = queryCommand.sort({ "rating.avgRating": order });
-                }
-            }
-        }
-        
-        const allProduct = await queryCommand.exec();
-        
-        return {
-            status: 'OK',
-            message: 'Lấy danh sách sản phẩm thành công!',
-            data: allProduct,
-            totalProduct,
-            pageCurrent: page,
-            totalPage: Math.ceil(totalProduct / limit)
-        };
-    } catch (e) {
-        throw new Error('Không thể lấy danh sách sản phẩm: ' + e.message);
-    }
-};
-
 const getDetailProduct = async (id) => {
     if (!isValidObjectId(id)) {
         throw new Error('ID sản phẩm không hợp lệ.');
@@ -261,7 +202,7 @@ const getDetailProduct = async (id) => {
         const product = await Product.findById(id).populate('genre', 'name');
         if (product === null) {
             throw new Error('Sản phẩm không tồn tại!');
-        }
+        }       
 
         return {
             status: 'OK',
@@ -454,7 +395,6 @@ export default {
     createProduct,
     updateProduct,
     deleteProduct,
-    getAllProduct,
     getDetailProduct,
     getProductsPaginated,
     getProductsForSelect,

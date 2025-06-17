@@ -15,18 +15,17 @@ const batchSchema = new mongoose.Schema({
             ref: 'Product',
             required: true
         },
+        importPrice: {
+            type: Number,
+            required: true,
+            min: 0
+        },
         quantity: {
             type: Number,
             required: true,
             min: 1
         }
     }],
-    discountPercentage: {
-        type: Number,
-        default: 0,
-        min: 0,
-        max: 100
-    },
     notes: {
         type: String
     }
