@@ -55,7 +55,7 @@ const updateGenre = async (id, genreData) => {
         throw new Error('Mô tả thể loại là bắt buộc.');
     }
     try {
-        const existingGenre = await Genre.findOne({ name: genreData.name });
+        const existingGenre = await Genre.findOne({ name: genreData.name, _id: { $ne: id } });
         if (existingGenre) {
             throw new Error('Thể loại với tên này đã tồn tại.');
         }

@@ -5,7 +5,7 @@ import * as elasticsearchService from './ElasticSearchService.js';
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
 const createProduct = async (newProduct) => {
-    const { productCode, name, images, genre, description, author, publisher, originalPrice, publicationYear, weight, dimensions, pageCount, format } = newProduct;
+    const { productCode, name, images, genre, description, author, publisher, originalPrice, publicationYear, weight, dimensions, pageCount, format, countInStock = 0 } = newProduct;
 
     if (!productCode || !name || !images || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
         throw new Error('Thiếu thông tin cần thiết để tạo sản phẩm.');
@@ -22,7 +22,8 @@ const createProduct = async (newProduct) => {
     newProduct.originalPrice = Number(originalPrice);
     newProduct.publicationYear = Number(publicationYear);
     newProduct.pageCount = Number(pageCount);
-    
+    newProduct.countInStock = Number(countInStock);
+
     if (isNaN(newProduct.originalPrice) || newProduct.originalPrice < 0) {
         throw new Error('Giá bìa không hợp lệ.');
     }
@@ -80,7 +81,7 @@ const updateProduct = async (id, data) => {
         throw new Error('ID sản phẩm không hợp lệ.');
     }
 
-    const { productCode, name, genre, description, author, publisher, originalPrice, publicationYear, pageCount } = data;
+    const { productCode, name, genre, description, author, publisher, originalPrice, publicationYear, pageCount, countInStock = 0 } = data;
 
     if (!productCode || !name || !genre || !description || !author || !publisher || !originalPrice || !publicationYear || !pageCount) {
         throw new Error('Thiếu thông tin cần thiết để cập nhật sản phẩm.');
@@ -93,6 +94,7 @@ const updateProduct = async (id, data) => {
     data.originalPrice = Number(originalPrice);
     data.publicationYear = Number(publicationYear);
     data.pageCount = Number(pageCount);
+    data.countInStock = Number(countInStock);
 
     if (isNaN(data.originalPrice) || data.originalPrice < 0) {
         throw new Error('Giá bìa không hợp lệ.');
@@ -104,6 +106,10 @@ const updateProduct = async (id, data) => {
 
     if (data.pageCount === undefined || isNaN(data.pageCount) || data.pageCount < 0) {
         throw new Error('Số trang không hợp lệ.');
+    }
+
+    if (data.countInStock === undefined || isNaN(data.countInStock) || data.countInStock < 0) {
+        throw new Error('Số lượng không hợp lệ.');
     }
 
     try {
@@ -174,7 +180,6 @@ const deleteProduct = async (id) => {
             console.log('Đã xóa sản phẩm khỏi Elasticsearch');
         } catch (esError) {
             console.error('Lỗi khi xóa sản phẩm khỏi Elasticsearch:', esError);
-            // Không throw lỗi để không ảnh hưởng đến luồng xóa sản phẩm
         }
 
         await Product.findByIdAndDelete(id, { session });

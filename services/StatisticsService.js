@@ -6,7 +6,6 @@ import Batch from "../models/BatchModel.js";
 import Genre from "../models/GenreModel.js";
 import Payment from "../models/PaymentModel.js";
 import Review from "../models/ReviewModel.js";
-import dayjs from 'dayjs';
 
 const getGeneralStatistics = async () => {
   try {
