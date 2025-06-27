@@ -234,7 +234,7 @@ const deleteVoucher = async (id) => {
   }
 };
 
-const applyVoucher = async (code, orderValue) => {
+const applyVoucher = async (code, orderValue, userId) => {
   try {
     if (!code || typeof code !== 'string') {
       throw new Error('Mã voucher không hợp lệ');
@@ -242,6 +242,16 @@ const applyVoucher = async (code, orderValue) => {
     
     if (orderValue === undefined || orderValue === null || isNaN(orderValue) || orderValue < 0) {
       throw new Error('Giá trị đơn hàng không hợp lệ');
+    }
+
+    // Kiểm tra xem người dùng đã sử dụng mã giảm giá này chưa
+    const orderWithVoucher = await Order.findOne({
+      user: userId,
+      voucherCode: code
+    });
+
+    if (orderWithVoucher) {
+      throw new Error('Mã giảm giá này đã được sử dụng trước đó!');
     }
 
     const voucher = await getVoucherByCode(code);

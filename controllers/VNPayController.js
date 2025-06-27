@@ -46,10 +46,14 @@ const createPayment = async (req, res) => {
     }
 
     if (order.payment.status !== "Completed") {
+      // Thêm timestamp vào orderId để đảm bảo mỗi lần thanh toán là duy nhất
+      const timestamp = Date.now();
+      const uniqueOrderId = `${orderId}_${timestamp}`;
+
       const paymentUrl = vnpay.buildPaymentUrl({
         vnp_Amount: order.totalPrice, // Lấy tổng tiền từ đơn hàng
         vnp_IpAddr: ipAddr, //Địa chỉ IP của khách hàng thực hiện giao dịch
-        vnp_TxnRef: orderId, //Mã đơn hàng ở phía khách hàng
+        vnp_TxnRef: uniqueOrderId, //Mã đơn hàng ở phía khách hàng
         vnp_OrderInfo: `Thanh toan don hang #${orderId}, so tien: ${order.totalPrice} VND`,
         vnp_OrderType: ProductCode.Books_Newspapers_Magazines,
         vnp_ReturnUrl: `${process.env.SERVER_URL}/api/vnpay/callback`,
@@ -87,9 +91,12 @@ const handleCallback = async (req, res) => {
     }
 
     // Lấy thông tin giao dịch
-		const orderId = verify.vnp_TxnRef;
+		const uniqueOrderId = verify.vnp_TxnRef;
 		const transactionNo = verify.vnp_TransactionNo;
 		const payDate = verify.vnp_PayDate;
+    
+    // Tách lấy orderId gốc (phần trước dấu _)
+    const orderId = uniqueOrderId.split('_')[0];
 
 		// Tìm kiếm thanh toán theo orderId
 		const payment = await Payment.findOne({ order: orderId }).session(session);
@@ -138,9 +145,12 @@ const handleIPN = async (req, res) => {
 		}
 
 		// Lấy thông tin giao dịch
-		const orderId = verify.vnp_TxnRef;
+		const uniqueOrderId = verify.vnp_TxnRef;
 		const transactionNo = verify.vnp_TransactionNo;
 		const payDate = verify.vnp_PayDate;
+    
+    // Tách lấy orderId gốc (phần trước dấu _)
+    const orderId = uniqueOrderId.split('_')[0];
 
 		// Tìm kiếm thanh toán theo orderId
 		const payment = await Payment.findOne({ order: orderId }).session(session);

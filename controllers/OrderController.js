@@ -43,7 +43,7 @@ const createOrder = async (req, res) => {
         // Áp dụng voucher nếu có
         let discountPrice = 0;
         if (voucherCode) {
-            const voucherResult = await VoucherService.applyVoucher(voucherCode, itemsPrice);
+            const voucherResult = await VoucherService.applyVoucher(voucherCode, itemsPrice, userId);
             if (voucherResult.status === 'OK') {
                 discountPrice = voucherResult.discountPrice;
             }
@@ -118,7 +118,7 @@ const getDetailsOrder = async (req, res) => {
             })
         }
         const order = await OrderServices.getDetailsOrder(orderId);
-        if(order.user !== userId && !req.user.isAdmin){
+        if((order.user.toString() !== userId) && !req.user.isAdmin){
             return res.status(200).json({
                 message: 'Bạn không có quyền truy cập vào đơn hàng này'
             })
