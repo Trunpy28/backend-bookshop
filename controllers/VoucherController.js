@@ -133,7 +133,24 @@ const applyVoucher = async (req, res) => {
       message: error.message
     });
   }
-}; 
+};
+
+const checkVoucher = async (req, res) => {
+  try {
+    const { code } = req.params;
+    const userId = req.user.id;
+    
+    const voucher = await VoucherService.checkVoucher(code, userId);
+    
+    return res.status(200).json({
+      data: voucher,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      message: error.message
+    });
+  }
+};
 
 export default {
   createVoucher,
@@ -144,4 +161,5 @@ export default {
   updateVoucher,
   deleteVoucher,
   applyVoucher,
+  checkVoucher
 };

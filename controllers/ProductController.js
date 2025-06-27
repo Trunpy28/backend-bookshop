@@ -9,7 +9,6 @@ const createProduct = async (req, res) => {
         
         // Upload từng ảnh lên Cloudinary và lưu link
         const { listResult, errorList } = await CloudinaryService.uploadFiles(files);
-        console.log(listResult);
 
         if (errorList.length > 0) {
             return res.status(400).json({ message: 'Một số ảnh không thể tải lên', errors: errorList });

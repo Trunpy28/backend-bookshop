@@ -26,11 +26,6 @@ const addAddress = async (userId, addressData) => {
         const isFirstAddress = !shippingAddress || shippingAddress?.addresses?.length === 0;
         if (isFirstAddress) {
             addressData.isDefault = true;
-        } else if (shippingAddress && addressData.isDefault) {
-            // Nếu địa chỉ mới là mặc định, cập nhật các địa chỉ khác thành không mặc định
-            shippingAddress.addresses.forEach(address => {
-                address.isDefault = false;
-            });
         }
 
         // Nếu chưa có sổ địa chỉ, tạo mới
@@ -72,12 +67,6 @@ const updateAddress = async (userId, addressId, addressData) => {
 
         if (addressIndex === -1) {
             throw new Error('Không tìm thấy địa chỉ.');
-        }
-
-        if (addressData.isDefault && !shippingAddress.addresses[addressIndex].isDefault) {
-            shippingAddress.addresses.forEach(address => {
-                address.isDefault = false;
-            });
         }
 
         // Cập nhật địa chỉ

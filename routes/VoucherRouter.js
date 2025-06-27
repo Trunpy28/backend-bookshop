@@ -14,6 +14,7 @@ router.get('/active', VoucherController.getActiveVouchers);
 router.post('/apply', authMiddleware, VoucherController.applyVoucher);
 router.get('/getByCode/:code', VoucherController.getVoucherByCode);
 router.get('/get/:id', VoucherController.getVoucherById);
+router.get('/check-voucher/:code', authMiddleware, VoucherController.checkVoucher);
 
 //admin
 router.post('/create', authMiddleware, adminAuthMiddleware, upload.single('image'), VoucherController.createVoucher);

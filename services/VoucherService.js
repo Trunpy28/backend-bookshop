@@ -1,6 +1,7 @@
 import Voucher from '../models/VoucherModel.js';
 import mongoose from 'mongoose';
 import dayjs from 'dayjs';
+import Order from '../models/OrderModel.js';
 
 const createVoucher = async (data) => {
   try {
@@ -134,7 +135,7 @@ const getVoucherByCode = async (code) => {
 
     return voucher;
   } catch (error) {
-    throw new Error('Lỗi khi tìm voucher: ' + error.message);
+    throw new Error(error.message);
   }
 };
 
@@ -289,6 +290,46 @@ const getActiveVouchers = async () => {
   }
 };
 
+const checkVoucher = async (code, userId) => {
+  try {
+    if (!code || typeof code !== 'string') {
+      throw new Error('Mã voucher không hợp lệ');
+    }
+    
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error('ID người dùng không hợp lệ');
+    }
+
+    const upperCode = code.toUpperCase();
+    
+    // Kiểm tra xem mã giảm giá có tồn tại và còn hiệu lực không
+    const voucher = await Voucher.findOne({ 
+      code: upperCode,
+      isActive: true,
+      startDate: { $lte: new Date() },
+      endDate: { $gte: new Date() }
+    });
+    
+    if (!voucher) {
+      throw new Error('Mã giảm giá không hợp lệ hoặc đã hết hạn!');
+    }
+
+    // Kiểm tra xem người dùng đã sử dụng mã giảm giá này chưa
+    const orderWithVoucher = await Order.findOne({
+      user: userId,
+      voucherCode: upperCode
+    });
+
+    if (orderWithVoucher) {
+      throw new Error('Mã giảm giá này đã được sử dụng trước đó!');
+    }
+
+    return voucher;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+};
+
 export default {
   createVoucher,
   getAllVouchers,
@@ -298,4 +339,5 @@ export default {
   deleteVoucher,
   applyVoucher,
   getActiveVouchers,
+  checkVoucher
 };

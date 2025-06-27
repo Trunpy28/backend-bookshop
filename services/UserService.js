@@ -12,18 +12,12 @@ const createUser = async (newUser) => {
     email: email,
   });
   if (checkUser !== null) {
-    return {
-      status: "ERR",
-      message: "Email đã tồn tại!",
-    };
+    throw new Error("Email đã tồn tại!");
   }
   
   // Yêu cầu mật khẩu cho đăng ký thông thường
   if (!password) {
-    return {
-      status: "ERR",
-      message: "Mật khẩu là trường bắt buộc!",
-    };
+    throw new Error("Mật khẩu là trường bắt buộc!");
   }
   
   const hashedPassword = bCrypt.hashSync(password, 10);
@@ -58,27 +52,18 @@ const loginUser = async (userLogin) => {
   }).select("+password");
   
   if (checkUser === null) {
-    return {
-      status: "ERR",
-      message: "Tài khoản không tồn tại!",
-    };
+    throw new Error("Email không tồn tại!");
   }
   
   // Kiểm tra xem tài khoản có password hay không (nếu là tài khoản OAuth sẽ không có)
   if (!checkUser.password) {
-    return {
-      status: "ERR",
-      message: "Tài khoản này được đăng ký bằng Google hoặc Facebook. Vui lòng sử dụng phương thức đăng nhập tương ứng!",
-    };
+    throw new Error("Tài khoản này được đăng ký bằng Google hoặc Facebook. Vui lòng sử dụng phương thức đăng nhập tương ứng!");
   }
   
   const comparePassword = bCrypt.compareSync(password, checkUser.password);
 
   if (!comparePassword) {
-    return {
-      status: "ERR",
-      message: "Mật khẩu hoặc email không đúng",
-    };
+    throw new Error("Mật khẩu hoặc email không đúng");
   }
 
   const access_token = await JwtService.generalAccessToken({
@@ -101,10 +86,7 @@ const updateUser = async (id, data) => {
   const checkUser = await User.findById(id);
 
   if (checkUser === null) {
-    return {
-      status: "ERR",
-      message: "Tài khoản không tồn tại!",
-    };
+    throw new Error("Tài khoản không tồn tại!");
   }
 
   // Chỉ cập nhật những trường được cung cấp
@@ -124,10 +106,7 @@ const deleteUser = async (id) => {
   const checkUser = await User.findById(id);
 
   if (checkUser === null) {
-    return {
-      status: "ERR",
-      message: "Tài khoản không tồn tại!",
-    };
+    throw new Error("Tài khoản không tồn tại!");
   }
 
   await User.findByIdAndDelete(id);

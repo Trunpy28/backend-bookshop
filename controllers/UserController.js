@@ -13,7 +13,7 @@ const createUser = async (req,res) => {
             })
         }
 
-        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         const ischeckEmail = regex.test(email);
         if(!ischeckEmail){
             return res.status(400).json({
@@ -65,7 +65,7 @@ const loginUser = async (req,res) => {
         }
         
         // Kiểm tra định dạng email
-        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         const ischeckEmail = regex.test(email);
         if(!ischeckEmail){
             return res.status(400).json({
@@ -216,7 +216,7 @@ const logoutUser = async (req,res) => {
 const forgotPassword = async (req,res) => {
     try {
         const email = req.params.email;
-        const regex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
+        const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
         const ischeckEmail = regex.test(email);
         if(!email || !ischeckEmail) return res.status(404).json({
             message: "Email không hợp lệ!"
